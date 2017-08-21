@@ -100,7 +100,7 @@ scroll_set(Scroll *s, ulong thumb, ulong extent, ulong max) {
 }
 
 static ulong
-div_down(ulong p, ulong q) {
+div_down(unsigned long long p, unsigned long long q) {
 	return p / q;	
 }
 
@@ -113,7 +113,7 @@ static Rectangle
 getthumb(Scroll *s, ulong extent, ulong max, ulong thumb)
 {
 	Rectangle	r;
-	ulong length;
+	unsigned long long length;
 
 	r = inset(s->r, 1);
 	assert (Dx(s->r)<= SCROLLWIDTH);

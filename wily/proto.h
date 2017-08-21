@@ -222,6 +222,8 @@ ulong	utftotext			(Rune *, char *, char *);
 int 		diag				(char*,char*, ...);
 void		cleanup_and_abort	(int);
 void		cleanup_and_die	(int);
+int		fillutfchar		(char*,int,char*,int);
+int		unfullutfbytes		(char*,int);
 Rstring 	utf2rstring		(char*utf);
 
 /* vgeom.c */

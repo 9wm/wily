@@ -137,20 +137,18 @@ int
 text_fd(Text *t, Range sel)
 {
 	char	*file = tmpnam(0);
-	int	fd;
-	int	input;
+	int	fd = -1;
+	int	input = -1;
 
 	if ((fd = open(file, O_WRONLY|O_CREAT, 0600)) < 0) {
 		perror("open temp file");
-		(void) unlink(file);
-		return(-1);
+		goto fail;
 	}
 
 	/* Now for the child's end.  Do it quick so we can unlink. */
 	if ((input = open(file, O_RDONLY)) < 0) {
 		perror("open temp file");
-		(void) unlink(file);
-		return(-1);
+		goto fail;
 	}
 
 	if (unlink(file) < 0)
@@ -163,12 +161,21 @@ text_fd(Text *t, Range sel)
 	 */
 	if (text_write_range(t, sel, fd)) {
 		perror("write temp file");
-		return(-1);
+		goto fail;
 	}
 	if (close(fd) <  0)
 		perror("close temp file");
 
 	return input;
+
+ fail:
+	if (input >= 0)
+		(void) close(input);
+	if (fd >= 0) {
+		(void) close(fd);
+		(void) unlink(file);
+	}
+	return(-1);
 }
 
 /****************************************************
@@ -199,7 +206,7 @@ text_autoindent(Text *t, ulong p)
 	text_copy(t, r, buf +1);
 
 	i = 1;
-	while (i <= RLEN(r) && isspace(buf[i]))
+	while (i <= RLEN(r) && (buf[i] < 128) && isspace(buf[i])) /* FIXME unicode isspace() */
 		i++;
 	s.r1 = buf + i;
 
@@ -291,6 +298,7 @@ text_duputf(Text *t, Range r) {
 	if(!len)
 		return strdup("");
 
+	assert(len > 0);
 	buf = salloc(len * UTFmax);
 	n = text_copyutf(t, r, buf);
 	buf[n] = '\0';
@@ -309,6 +317,10 @@ text_copyutf(Text*t, Range r, char *buf)
 	int		n;
 
 	rlen = RLEN(r);
+	assert(rlen >= 0);
+
+	if (rlen == 0)
+		return 0;
 
 	rbuf = salloc( rlen * sizeof(Rune));
 	text_copy(t, r, rbuf);

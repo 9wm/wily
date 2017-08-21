@@ -227,7 +227,7 @@ adjust_position(Tile *t) {
 		}
 	}
 	
-	/* move t->min up a bit? */
+	/* move t->max up a bit? */
 	diff = t->max - (l->cmax - after);
 	if (diff>0) {
 		move= MIN(available, diff);

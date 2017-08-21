@@ -77,6 +77,7 @@ Range
 text_expand(Text *t, Range r, char *s) {
 	int	c;
 
+	assert(ROK(r));
 	Tgetcset(t, r.p1);
 	while( (c = Tgetc(t)) !=-1 && okchar(c,s))
 		r.p1++;
@@ -95,8 +96,7 @@ text_doubleclick(Text *t, ulong p0) {
 	Rune *r, *l;
 	Range	dot;
 
-	if(p0 > t->length)
-		return dot;
+	assert (p0 <= t->length);
 	dot.p0 = dot.p1 = p0;
 	for(i=0; left[i]; i++){
 		l = left[i];
@@ -114,6 +114,7 @@ text_doubleclick(Text *t, ulong p0) {
 				dot.p0 = p0;
 				dot.p1 = t->pos-(c!='\n');
 			}
+			assert(ROK(dot));
 			return dot;
 		}
 		/* try right match */
@@ -132,6 +133,7 @@ text_doubleclick(Text *t, ulong p0) {
 					dot.p0++;
 				dot.p1 = p0+(p0<t->length && c=='\n');
 			}
+			assert(ROK(dot));
 			return dot;
 		}
 	}
@@ -143,6 +145,7 @@ text_doubleclick(Text *t, ulong p0) {
 	Tbgetcset(t, p0);
 	while((c=Tbgetc(t))!=-1 && okchar(c, notdoubleclick))
 		dot.p0--;
+	assert(ROK(dot));
 	return dot;
 }
 

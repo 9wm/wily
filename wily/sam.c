@@ -188,6 +188,7 @@ long
 Tchars(Text *t, Rune *buf, ulong p0, ulong p1) {
 	Range	r;
 	
+	assert(p0 <= p1);
 	r = range( p0, MIN(p1, t->length));
 	text_copy(t, r, buf);
 	return RLEN(r);

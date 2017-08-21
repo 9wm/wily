@@ -67,9 +67,12 @@ hashpath(char *path)
 {
 	char *s;
 	unsigned long hash = 0;
+	Path fullpath;
 
 	assert(path);
 
+	label2path(fullpath, path);
+	path = fullpath;
 	for (s = strrchr(path, '/'); path < s; path++)
 		hash = (hash << 5) ^ *path;
 

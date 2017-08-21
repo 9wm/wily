@@ -5,7 +5,7 @@
 #include "wily.h"
 #include "text.h"
 
-static char	*endword = "[^a-zA-Z0-9][^a-zA-Z0-9|]*";
+static char	*endword = "[^a-zA-Z0-9][^a-zA-Z0-9:.$|]*";
 static char	*startword = "[^a-zA-Z0-9]";
 static char 	*special = ".*+?(|)\\[]^$";
 
@@ -41,7 +41,7 @@ text_findliteralutf(Text*t, Range *r, char*lit)
 	Bool	found;
 
 	s = utf2rstring(lit);
-	r->p0 = r->p1;
+	/* r->p0 = r->p1; */
 	found = text_findliteral(t, r, s);
 	free(s.r0);
 
@@ -62,8 +62,8 @@ text_findwordutf(Text*t, Range *r, char*lit)
 }
 
 /*
- * If we can find 's' in 't' (start looking at 'pos'), return true and
- * set 'pos' to the location of the start of the string.  Otherwise,
+ * If we can find 's' in 't' (start looking at 'r'), return true and
+ * set 'r' to the location of the start of the string.  Otherwise,
  * return false.
  */
 Bool
@@ -98,18 +98,20 @@ text_search(Text *t, Range *r, char *addr, Range dot)
 {
 	char	*addr2;
 
+	assert(addr);
+
 	/*
 	 * Find the second addr in the pair.  Some complexity here:
 	 *	(1) If the first addr is a regexp, must first find its end -- but watch
 	 *		out for escaped "/"'s.
 	 *	(2) Otherwise, just find the first comma.
 	 */
-	if (*addr == '/') {
+	 if (*(addr2=addr) == '-')
+	 	addr2++;
+	if (*addr2++ == '/') {
 		/* find an unescaped "/" */
-		for (addr2 = addr + 1;
-				(addr2 = strchr(addr2, '/')) && addr2[-1] == '\\';
-				addr2++)
-			;
+		while ((addr2 = strchr(addr2, '/')) && addr2[-1] == '\\')
+			addr2++;
 		/* check to see that it's followed by a comma */
 		if (addr2 && *++addr2 != ',')
 			addr2 = 0;

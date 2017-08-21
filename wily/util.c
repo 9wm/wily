@@ -60,6 +60,42 @@ isdir(char*path) {
 }
 
 /*
+** Append bytes from `s' (of length `ns') to `r' (of length `nr') until
+** `r' has a full rune.  Stop if `s' ends or an illegal utf sequence
+** is detected.  Return the number of bytes appended.
+** sizeof `r' must be at least UTFmax+1 bytes.
+*/
+int
+fillutfchar(char *r, int nr, char *s, int ns) {
+	int	c = 0;
+
+	r += nr;
+	while ((nr < UTFmax) && (ns > 0) && ((((uchar)*s)&0xC0) == 0x80))
+		*r++=*s++, nr++, ns--, c++;
+	*r = '\0';
+	return c;
+}
+
+/*
+** If utf string `s' of length `n' ends with an uncomplete rune, return
+** the number of bytes in that rune.  (If `s' ends with an illegal utf
+** sequence, return zero.)
+ */
+int
+unfullutfbytes(char *s, int n) {
+	int	e = 1;
+
+	for (e = 1; (e < n) && (e < UTFmax); ++e) {
+		if (((uchar)s[n-e]&0xC0) != 0x80) {
+			if (!fullrune(s+n-e, e))
+				return e;
+			break;
+		}
+	}
+	return 0;
+}
+
+/*
  * Return Rstring for utf.  Either s.r0 == s.r1 == 0, 
  * or s.r0 will need to be free
  */
@@ -156,6 +192,7 @@ noutput(char *context, char *base, int n)
 	strcpy(s, "+Errors");
 	
 	v = openlabel(errwin, true);
+	n = stripnulls(base, n);
 	base[n] = 0;
 	t = view_text(v);
 	p = text_length(t);
@@ -177,8 +214,9 @@ columnate(int totalwidth, int tabwidth, Font *f, char **item)
 	int	maxwidth;
 	int	j, widest,nitems, ntabs, biggest;
 	int	*width;
-	char	*buf, *s, **c;
+	char	*buf, **c;
 	int	remaining;
+	int	bufsize = 1024;
 
 
 	/* count the items */
@@ -208,11 +246,14 @@ columnate(int totalwidth, int tabwidth, Font *f, char **item)
 		ntabs++;
 	maxwidth = ntabs*tabwidth;
 	columns = ((totalwidth -biggest) / maxwidth) +1;
+	if (columns < 1)
+		columns = 1;
 	rows = nitems / columns;
 	if (nitems % columns)
 		rows++;
 
-	s = buf = (char*)salloc(nitems*(strlen(item[widest])+4));
+	buf = (char*)salloc(bufsize);
+	j = 0;
 
 	remaining = nitems;
 	for(row=0; ; row++) {
@@ -228,20 +269,24 @@ columnate(int totalwidth, int tabwidth, Font *f, char **item)
 				ntabs++;
 			if(column==columns-1)
 				ntabs=0;		/* no tabs for last column */
-			assert(ntabs < 48);
-			strcpy(s, item[current]);
-			s += strlen(item[current]);
+			if (j+strlen(item[current])+ntabs+2 >= bufsize) {
+				bufsize *= 2;
+				buf = (char*) srealloc(buf, bufsize);
+			}
+			strcpy(&buf[j], item[current]);
+			j += strlen(item[current]);
 			while(ntabs-->0)
-				*s++ = '\t';
+				buf[j++] = '\t';
 			if (!(--remaining))
 				goto done;
 		}
-		*s++ = '\n';
+		buf[j++] = '\n';
 	}
 done:
 	if(column)
-		*s++ = '\n';
-	*s++='\0';
+		buf[j++] = '\n';
+	buf[j]='\0';
+	assert(j < bufsize);
 	free(width);
 	return buf;
 }
@@ -336,6 +381,7 @@ error(char *fmt, ...)
 	va_start(args,fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
+	fprintf(stderr, "\n");
 }
 
 /* Error we cannot recover from */
@@ -420,8 +466,22 @@ int	utftotext_unconverted;	/* bytes at the end which weren't converted */
 
 /* Convert UTF from s1 to s2 into runes, store them at r
  * Returns the number of runes stored.
- * Sets utfHadNulls to indicate that some of the UTF contained nulls,
- * which are _not_ converted into null Runes.
+ * Sets utfHadNulls to indicate that some of the UTF contained nulls or bad UTF.
+ * Bad UTF and nulls will be replaced with rune Runeerror (u0080).
+ * Set utftotext_unconverted to the number of bytes before the end that
+ * belongs to a char extending beyond the end and wasn't converted.
+ *
+ * This function will look beyond the end s2 if the last UTF combination
+ * is not completely within the range.  If converting an entire range
+ * at once, it should have an extra '\0' at s2 (right after the end)
+ * so that an incomplete (bad) multibyte UTF combination at the end
+ * will be correctly detected.  It converting a subrange of a larger UTF
+ * sequence, make sure the end s2 is after a complete UTF combination,
+ * OR leave enough bytes beyond the end to complete any multibyte UTF char
+ * (UTFmax) and examine utftotext_unconverted after the call returns.
+ *
+ * Note: This function will be called multiple times during a big read,
+ * so utfHadNulls must be preset to false by the caller as appropriate.
  */
 ulong
 utftotext(Rune *r, char *s1, char *s2)
@@ -429,18 +489,19 @@ utftotext(Rune *r, char *s1, char *s2)
 	Rune	*q;
 	char	*v;
 	
-	utfHadNulls = false;
 	if (s2 <= s1)
 		return 0;
 	for (v = s1, q = r; v < s2; ) {
 		if (!(*(uchar*)v)) {
 			utfHadNulls = true;
 			v++;
-			continue;
+			*q =Runeerror;
 		} else if (*(uchar *)v < Runeself) {
 			*q = *v++;
 		} else {
 			v += chartorune(q, v);
+			if (*q == Runeerror)
+				utfHadNulls = true;
 		}
 		assert(*q);
 		q++;
@@ -450,7 +511,24 @@ utftotext(Rune *r, char *s1, char *s2)
 		q--;
 		length  = runelen(*q);
 		utftotext_unconverted = s2 - (v-length);
+	} else {
+		utftotext_unconverted = 0;
 	}
 	return q-r;
 }
 
+int
+stripnulls(char *buf, int len) {
+	char	*s, *d, *e=buf+len;
+
+	if (!(s = d = memchr(buf, '\0', len)))
+		return len;
+
+	while (++s < e) {
+		if (*s == '\0')
+			--len;
+		else
+			*d++ = *s;
+	}
+	return --len;
+}

@@ -34,7 +34,7 @@ void
 win_clone(Tile *win) {
 	Text *tag, *body;
 	
-	assert(ISWIN(w));
+	assert(ISWIN(win));
 	
 	tag = view_text(win->tag);
 	body = view_text(win->body);

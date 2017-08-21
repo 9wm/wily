@@ -89,6 +89,8 @@ data_put(Data *d, char *label) {
 		if(!d->names) {
 			tag_rmtool(d->tag, "Put");
 			undo_mark(d->t);
+			if (d->backupto && strcmp(d->backupto, path))
+				data_setbackup(d, path);
 		}
 		return 0;
 	}

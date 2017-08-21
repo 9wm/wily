@@ -25,4 +25,5 @@ nuke:
 	for i in $(SUBDIRS); do \
 		(cd $$i; $(MAKE) $(MFLAGS) $@); \
 	done
-	-rm wily.* config.log
+	-rm -f wily.* config.cache config.h config.log config.status Makefile
+distclean: nuke

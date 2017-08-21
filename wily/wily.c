@@ -9,7 +9,7 @@ static int	ncolumns = 2;
 int	tagheight;
 Tile	*wily=0;			/* encloses the whole application */
 
-char *wilytools = 	"Kill | Newcol Quit Putall wily-0.13.41 Dotfiles Font "; /* version */
+char *wilytools = 	"Kill | Newcol Quit Putall wily-0.13.42 Dotfiles Font "; /* version */
 char *filetools = 	"Del Look .";
 char *dirtools = 	"Del Look ..";
 char *columntools = "Delcol New Cut Paste Snarf Anchor Split | ";
@@ -149,28 +149,23 @@ mainloop(void)
 	Event	e;
 	Bool	mouseaction=true;
 	Point	lastp={0,0};
-	View	*v=0;
 
 	while ((type = eread(~0, &e))) {
 		switch(type){
 		case Ekeyboard:
 			if(mouseaction) {
-				/* 'v' is a cache of the view we are pointing at,
-				 * (we use point to type).  We update this only
-				 * when we start typing after moving the pointer.
-				 */
-				v = point2view(lastp);
+				last_focus = point2view(lastp);
 				mouseaction=false;
 			}
-			if(v)
-				dokeyboard(v, e.kbdc);
+			if (last_focus)
+				dokeyboard(last_focus, e.kbdc);
 			break;
 
 		case Emouse:
 			lastp = e.mouse.xy;
 			mouseaction=true;
-			if(e.mouse.buttons && (v = point2view(e.mouse.xy)))
-				domouse(v, &e.mouse);	
+			if(e.mouse.buttons && (last_focus = point2view(e.mouse.xy)))
+				domouse(last_focus, &e.mouse);	
 			break;
 
 		default:

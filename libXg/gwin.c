@@ -143,6 +143,17 @@ static void
 Redraw(Widget w, XEvent *e, Region r)
 {
 	Reshapefunc f;
+	static unsigned long last_serial = 0;
+
+	if ((e) && (e->xexpose.count != 0))
+		return;
+
+	if (e) {
+		if (e->xexpose.serial == last_serial)
+			return;
+		else
+			last_serial = e->xexpose.serial;
+	}
 
 	f = ((GwinWidget)w)->gwin.reshaped;
 	if(f)
@@ -173,7 +184,7 @@ Keyaction(Widget w, XEvent *e, String *p, Cardinal *np)
 	static int composing = -2;
 
 	int c, minmod;
-	KeySym k, mk;
+	KeySym k, mk, l, u;
 	Charfunc f;
 	Modifiers md;
 
@@ -274,6 +285,11 @@ Keyaction(Widget w, XEvent *e, String *p, Cardinal *np)
 	/* Compensate for servers that call a minus a hyphen */
 	if(k == XK_hyphen)
 		k = XK_minus;
+	/* Do caps locking ourselves if translator doesn't */
+	if ((e->xkey.state&LockMask) && !(md&LockMask)) {
+		XtConvertCase(e->xany.display, k, &l, &u);
+		k = u;
+	}
 	/* Do control mapping ourselves if translator doesn't */
 	if((e->xkey.state&ControlMask) && !(md&ControlMask))
 		k &= 0x9f;

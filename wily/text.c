@@ -58,12 +58,12 @@ text_read(Text *t, int fd, int len)
 	int	desired, nread;
 	char	buf[BUFFERSIZE];
 	extern int utftotext_unconverted;
-	int	offset;
+	int	offset, end, stop;
 	
 	/* Ensure we have enough rune space.  Do it one
 	 * block to avoid fragmentation
 	 */
-	desired = len*sizeof(Rune) + GAPSIZE;
+	desired = len + GAPSIZE;
 	if (t->alloced < desired) {
 		t->alloced = desired;
 		free(t->text);
@@ -72,27 +72,33 @@ text_read(Text *t, int fd, int len)
 	t->length = 0;
 	t->pos = 0;
 	offset = 0;
-	while(len > 0) {
-		desired = MIN(len, BUFFERSIZE - offset);
+
+	while (len > 0) {
+		desired = MIN(len, BUFFERSIZE - offset - 1);
 		nread = read(fd, buf + offset, desired);
-		if(nread<=0)
+		if (nread <= 0)
 			return -1;
-		t->length += utftotext(t->text+t->length, buf, buf + nread +offset);
 		len -= nread;
+		stop = end = offset + nread;
+		buf[end] = '\0';
+		if (len > 0) /* if this is not the end of the file */
+			stop -= unfullutfbytes(buf, end);
+		t->length += utftotext(t->text+t->length, buf, buf + stop);
 		
 		/*
 		 * If there were bytes at the end of the buffer that
 		 * weren't a complete rune, copy them back to the
 		 * start of the buffer for the next time.
 		 */
-		if ( (offset = utftotext_unconverted)) {
-			memcpy(buf, buf + desired - offset, offset);
-		}
+		offset = end - stop;
+		if (offset > 0)
+			memcpy(buf, buf + end - offset, offset);
 	}
+	assert(offset == 0);
+
 	t->gap = range(t->length, t->alloced);
 	undo_reset(t);
 	undo_start(t);
-	close(fd);
 	viewlist_refresh(t->v);
 	return 0;
 }
@@ -228,6 +234,7 @@ text_replace(Text *t, Range r, Rstring s)
 
 	r.p1 = r.p0 + rslen;
 	assert(text_invariants(t));
+	assert(ROK(r));
 	return r;
 }
 

@@ -351,7 +351,7 @@ gotinput(XtPointer cldata, int *pfd, XtInputId *id)
 static void
 gottimeout(XtPointer cldata, XtIntervalId *id)
 {
-	if(!einitcalled || Stimer == -1)
+	if(!einitcalled || Stimer == -1 || esrc[Stimer].id != *(XtInputId*) id)
 		return;
 	/*
 	 * Don't queue up timeouts, because there's
@@ -360,7 +360,7 @@ gottimeout(XtPointer cldata, XtIntervalId *id)
 	 */
 	esrc[Stimer].head = (Ebuf *)1;
 	esrc[Stimer].count = 1;
-	XtAppAddTimeOut(app, (long)cldata, gottimeout, cldata);
+	esrc[Stimer].id = (XtInputId) XtAppAddTimeOut(app, (long)cldata, gottimeout, cldata);
 }
 
 static int
@@ -834,22 +834,26 @@ ebread(Esrc *s)
 	while(s->head == 0)
 		waitevent();
 	eb = s->head;
-#ifdef COMPRESSMOUSE
-	if(s == &esrc[Smouse]) {
-		while(eb->next) {
-			s->head = eb->next;
-			s->count--;
-			free(eb);
-			eb = s->head;
-		}
-	}
-#endif
 	s->head = s->head->next;
 	if(s->head == 0) {
 		s->tail = 0;
 		s->count = 0;
 	} else
 		s->count--;
+
+#ifdef COMPRESSMOUSE
+	if ((s == &esrc[Smouse]) && (s->head)) {
+		Ebuf *t = s->head;
+
+		while(t->next && ((Mouse*) t->buf)->buttons == ((Mouse*) t->next->buf)->buttons) {
+			s->head = t->next;
+			s->count--;
+			free(t);
+			t = s->head;
+		}
+	}
+#endif
+
 	return eb;
 }
 

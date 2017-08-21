@@ -4,6 +4,7 @@
 *********************************************************/
 
 #include "wily.h"
+#include <errno.h>
 #include <signal.h>
 
 typedef struct Key Key;
@@ -43,6 +44,13 @@ struct Key {
 	 */
 	View		*v;
 	Bool		first;
+
+	/*
+	** Runes with multibyte UTF codes must not be split across
+	** block boundaries.  Strip them off and join them in this buffer.
+	*/
+	char		obuf[UTFmax+1];
+	int		nobuf;
 };
 
 /*
@@ -63,7 +71,8 @@ static void	outmsg(Key*k, int n, char*s);
 static void	key_del(Key *k);
 static Key*	key_new(ulong key, int fd, Keytype t);
 static Key*	key_findcmd(char*cmd);
-static void	oneword(char*s, char*l);
+static void	oneword(char*s, char*l, int s_length);
+static void	output_fullutfs(Key*k, int n, char*s);
 static void	output(Key*k, int n, char*s);
 static void	ex_accept(int n, char*s);
 
@@ -106,10 +115,13 @@ event_outputstart(int fd, int pid, char*cmd, char*label, View *v){
 	if(k->v) {
 		k->first = true;
 	} else {
-		oneword(k->cmd, cmd);
+		oneword(k->cmd, cmd, sizeof(k->cmd));
 		olabel(k->olabel, label);
 		addrunning(k->cmd);
 	}
+
+	k->nobuf = 0;
+
 	return 0;
 }
 
@@ -138,7 +150,7 @@ dofd(ulong key, int n, char*s) {
 
 	switch(k->t){
 	case Klisten:	ex_accept(n,s);	break;
-	case Kout:	output(k, n, s);	break;
+	case Kout:	output_fullutfs(k, n, s);	break;
 	case Kmsg:	outmsg(k, n, s);	break;
 	default:		error("bad key type %d", k->t);		break;
 	}
@@ -168,6 +180,7 @@ void
 kill_list(void){
 	Key	*k;
 	
+	errno = 0;
 	for(k = keytab; k < keytab + MAXKEYS; k++)
 		if(k->t == Kout && !k->v)
 			diag(0, "Kill %s", k->cmd);
@@ -191,7 +204,9 @@ key_del(Key *k) {
 	estop(k->key);
 
 	switch(k->t) {
-	case Kout: 	if(!k->v)rmrunning(k->cmd); break;
+	case Kout: 	if (k->nobuf > 0)	output(k, k->nobuf, k->obuf);
+				if (!k->v)			rmrunning(k->cmd);
+				break;
 	case Kmsg:	data_fdstop(k->fd); break;
 	case Klisten:	error("Klisten closed");
 	default:		error("bad key type %d", k->t);
@@ -225,12 +240,45 @@ key_findcmd(char*cmd)
 
 /* Put a one-word version of long command 'l' into 's' */
 static void
-oneword(char*s, char*l){
-	strcpy(s,l);
-	
-	/* break at first whitespace */
-	if( (s = strpbrk(s, whitespace)) )
-		*s='\0';
+oneword(char*s, char*l, int s_length){
+	char *blank = strpbrk(l, whitespace);
+	if ((blank) && (blank - l < s_length))
+		s_length = blank - l + 1;
+	strncpy(s, l, s_length);
+	s[s_length-1] = '\0'; /* some strncpy() don't do this */
+}
+
+/*
+** Key has a buffer where we concatenate runes that get split between two
+** (or more -- very small?) blocks.  This is accomplished in four steps:
+** 1)  If we have an uncomplete rune from last call, try to complete it.
+** 2)  If output isn't exhausted and we have something from last call,
+** output it -- it's either a full rune or bad utf.
+** 3)  Put away any unfull rune at the and of the output.
+** 4)  Output any remaining output, which is now only full utfs.
+*/
+static void
+output_fullutfs(Key *k, int n, char *s) {
+	if (k->nobuf > 0) {
+		int m = fillutfchar(k->obuf, k->nobuf, s, n);
+		k->nobuf+=m, s+=m, n-=m;
+	}
+	if ((n > 0) && (k->nobuf > 0)) {
+		output(k, k->nobuf, k->obuf);
+		k->nobuf = 0;
+	}
+	if (n > 0) {
+		int m = unfullutfbytes(s, n);
+		if (m > 0) {
+			memcpy(k->obuf, s+n-m, m);
+			k->obuf[m] = '\0';
+			n -= m;
+		}
+		k->nobuf=m;
+	}
+	if (n > 0) {
+		output(k, n, s);
+	}
 }
 
 /* Copy the 'n' bytes of data in 's' to the window or output directory

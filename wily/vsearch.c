@@ -4,6 +4,7 @@
 
 #include "wily.h"
 #include "view.h"
+#include <errno.h>
 
 static Bool	view_literal(View**vp, Range*r, char*s);
 static Bool	view_gotofile(View**vp, Range *r, char *s);
@@ -166,7 +167,12 @@ view_gotofile(View**vp, Range *r, char *a) {
 	char *colon;	/* preserve the colon */
 	Path	label;
 
-	strcpy(s,a);		/* BUG - fails horribly if 'a' is large */
+	if (strlen(a) > sizeof(Path)-1) {
+		errno=0;
+		diag(0, "couldn't goto \"%s\": path too long", a);
+		return false;
+	}
+	strcpy(s,a);
 	colon = strchr(s, ':');
 	if (colon) {
 		*colon=0;

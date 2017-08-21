@@ -51,10 +51,14 @@ tag_settools(Text*t, char*s) {
 
 void
 tag_set(Text*t, char*s) {
+	View	*v;
+
 	assert(TEXT_ISTAG(t));
 
 	wily_modifying_tag = true;
 	text_replaceutf(t, text_all(t), s);
+	if ((v = text_view(t)))
+		v->anchor = text_length(t);
 	wily_modifying_tag = false;
 }
 

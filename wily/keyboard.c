@@ -16,6 +16,8 @@ static void		esc(View*v);
 void
 dokeyboard(View *v, Rune r) {
 	switch(r) {
+	case 0:			addrune(v,Runeerror); break;
+
 	case DownArrow:
 	case UpArrow:
 	case Home:
@@ -52,8 +54,7 @@ tag_cr(View*v) {
 	char*cmd;
 	
 	if(!RLEN(v->sel)){
-		assert(v->anchor <= v->sel.p0);
-		view_select(v, range(v->anchor, v->sel.p0));
+		view_select(v, maybereverserange(v->anchor, v->sel.p0));
 	}
 	cmd = text_duputf(v->t, v->sel);
 	if(cmd[0]==':'){
@@ -102,7 +103,7 @@ esc(View*v) {
 		view_cut(v, del);	
 	} else {
 		/* Select from v->anchor to v->sel.p0 */
-		view_select(v, range(v->anchor, v->sel.p0));
+		view_select(v, maybereverserange(v->anchor, v->sel.p0));
 		view_setlastselection(v);
 	}
 }

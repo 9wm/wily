@@ -185,6 +185,7 @@ rpc_read(Handle*h, Id w, Range r, char*buf)
 	Msg	m;
 	char	*err;
 
+	assert(ROK(r));
 	if (!(err=rpc_fill(h,&m, WMread, w, r, 0, 0))) {
 		strcpy(buf, m.s);
 		free(m.s);
@@ -231,6 +232,7 @@ rpc_gettools(Handle*h, Id w, char**s) {
 char*
 rpc_replace(Handle*h, Id w, Range r, char*s)
 {
+	assert(ROK(r));
 	return simple(h, WMreplace, w, r, s, 0);
 }
 

@@ -87,7 +87,7 @@ extern Range	nr;		/* null range */
 Handle*	rpc_init		(int);
 int		rpc_fileno(Handle *h);
 Bool		rpc_isconnected(Handle*);
-void		rpc_free (Handle*);
+void		rpc_freehandle (Handle*);
 
 char*	rpc_list		(Handle*h, char **bufptr);
 char*	rpc_new		(Handle*, char *, Id*, ushort);
@@ -119,5 +119,6 @@ Range		intersect (Range, Range);
 Range		rclip (Range, Range);
 ulong	pclipr(ulong p, Range r);
 Range	range(ulong , ulong );
+Range	maybereverserange(ulong,ulong);
 ulong	ladjust(ulong , Range , int );
 ulong	radjust(ulong , Range , int );

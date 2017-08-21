@@ -15,15 +15,16 @@ static Rectangle nullrect = { {0,0}, {0,0}};
 void
 view_getdot(View *v, char*buf, Bool isLine) {
 	if(isLine) {
-		sprintf(buf, " :%d,.", text_linenumber(v->t, v->sel.p0));
+		sprintf(buf, ":%d,.", text_linenumber(v->t, v->sel.p0));
 	} else {
 		/* character address */
-		sprintf(buf, " :#%lu,.", v->sel.p0);
+		sprintf(buf, ":#%lu,.", v->sel.p0);
 	}
 }
 
 Range
 view_expand(View *v, Range r, char *s) {
+	assert(ROK(r));
 	if(RLEN(r))
 		return r;
 	if (RLEN(v->sel) && v->sel.p0 <= r.p0 && v->sel.p1 >= r.p1)
@@ -70,6 +71,8 @@ view_delete(View *v){
 		return -1;
 	if(v==last_selection)
 		view_setlastselection(0);
+	if (v == last_focus)
+		last_focus = 0;
 	frclear(&v->f);
 	if(v->scroll)
 		free(v->scroll);
@@ -168,6 +171,7 @@ view_paste(View*v){
  */
 void
 view_cut(View*v, Range r) {
+	assert(ROK(r));
 	if(RLEN(r)){
 		snarf(v->t, r);
 		undo_break(v->t);
@@ -185,6 +189,7 @@ view_append(View *v, char *s, int n) {
 	t = v->t;
 	len = text_length(t);
 	end = range(len,len);
+	n = stripnulls(s, n);
 	s[n] = 0;
 	
 	text_replaceutf(v->t, end, s);
@@ -206,7 +211,8 @@ view_pipe(View *v, Bool *first, char *s, int n)
 		r = range(v->sel.p1, v->sel.p1);
 	}
 
-	s[n]=0;	/* bug - assuming no nulls in 's' */
+	n = stripnulls(s, n);
+	s[n]=0;
 	text_replaceutf(v->t,  r,  s);
 	r = range(p0, v->sel.p1);
 
@@ -243,10 +249,9 @@ view_border(View *v, Bool set)
 		return;
 	if (set)
 		border(&screen, r, SELECTEDBORDER, F);
-	else {
+	else
 		border(&screen, r, SELECTEDBORDER, 0);
-		border(&screen, v->r, 1, F);
-	}
+	border(&screen, v->r, 1, F);
 }
 
 /* Indicate visually that 'v' is the 'last_selection' */
@@ -350,6 +355,7 @@ static void
 view_refresh(View*v)
 {
 	if(ISVISIBLE(v)) {
+		v->visible.p0 = 0;
 		v->sel = range(v->visible.p0, v->visible.p0);
 		frdelete(&v->f, 0, v->f.nchars);
 		fill(v);

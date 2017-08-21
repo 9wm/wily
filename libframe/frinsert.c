@@ -133,7 +133,7 @@ frinsert(Frame *f, Rune *sp, Rune *ep, ulong p0)
 	 * Find point where old and new x's line up
 	 * Invariants:
 	 *	pt0 is where the next box (b, n0) is now
-	 *	pt1 is where it will be after then insertion
+	 *	pt1 is where it will be after the insertion
 	 * If pt1 goes off the rectangle, we can toss everything from there on
 	 */
 	for(b = &f->box[n0],npts=0;

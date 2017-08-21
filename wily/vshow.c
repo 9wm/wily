@@ -154,13 +154,15 @@ view_show(View *v, Range r) {
 /* Handle a mouse-click in 'v's scrollbar */
 void
 view_scroll(View *v, Mouse *m) {
-	int	y;
+	long long	y;
 	ulong n,base = v->visible.p0;
 	int	lineheight = v->f.font->height;
 	ulong	runepos;
 
 	assert(m->buttons);
 	
+	if (m->xy.y < v->f.r.min.y)
+		m->xy.y = v->f.r.min.y;
 	y = clip(m->xy.y - v->f.r.min.y, 0, Dy(v->f.r));
 	if (y < v->f.font->height && m->buttons != MIDDLE){
 		y = lineheight;

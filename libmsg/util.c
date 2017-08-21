@@ -10,6 +10,7 @@
 ulong
 ladjust(ulong val, Range r, int len)
 {
+	assert(ROK(r));
 	if( val>r.p1)
 		 return val + len - RLEN(r);
 	else if ( val>r.p0)
@@ -21,6 +22,7 @@ ladjust(ulong val, Range r, int len)
 ulong
 radjust(ulong val, Range r, int len)
 {
+	assert(ROK(r));
 	if( val >r.p1)
 		 return val + len - RLEN(r);
 	else if ( val>=r.p0)
@@ -68,6 +70,12 @@ range(ulong p0, ulong p1)
 	r.p0 = p0;
 	r.p1 = p1;
 	return r;
+}
+
+Range
+maybereverserange(ulong p0, ulong p1)
+{
+	return (p0 <= p1)? range(p0,p1) : range(p1,p0);
 }
 
 /* "Safe" realloc.   Currently all it does is crash cleanly

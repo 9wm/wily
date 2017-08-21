@@ -62,7 +62,7 @@ undo_ops(View *v, char*arg, Range (*undofn)(Text*, Bool))
 
 	if(!(v = view_body(v)))
 		return;
-	r = (*undofn)(v->t, (Bool)arg);
+	r = (*undofn)(v->t, arg!=0);
 	if ROK(r) {
 		view_show(v, r);
 		view_select(v, r);

@@ -67,6 +67,8 @@ dobutton(View *v, Mouse *orig) {
 /*
  * Some builtins should always be applied to the window where
  * you clicked button 2.
+ *
+ * BUG: Doesn't check for leading whitespace which *is* removed in run().
  */
 static char *locals[] = {"Look", "Put", "Get", "Undo", "Redo", 0};
 static Bool

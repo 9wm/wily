@@ -4,6 +4,7 @@
 
 #include "wily.h"
 #include "data.h"
+#include <errno.h>
 
 static int		data_getstat		(Data*, char*, char*, Stat*);
 static void	data_opennew		(Data*, char*, char*path);
@@ -176,10 +177,11 @@ data_getfile(Data*d, char*label, char*path, Stat*buf) {
 	d->names = 0;
 
 	/* d->t */
+	utfHadNulls = false;
 	text_read(d->t, fd, buf->st_size);
 	close(fd);
 	if (utfHadNulls) {
-		diag(path, "removed nulls from [%s]", path);
+		errno=0, diag(path, "nulls or illegal utf in [%s]", path);
 		data_setbackup(d,0);
 	}
 
@@ -202,7 +204,7 @@ data_settag(Data*d, char *path) {
 	
 	sprintf (buf, "%s %s | %s %s ", d->label, 
 		d->names? "Get":"", 
-		filetools, specific);
+		common, specific);
 	tag_set(d->tag, buf);
 }
 

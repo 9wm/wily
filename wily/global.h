@@ -6,6 +6,7 @@ extern char*dirtools;
 extern Bool show_dot_files;
 extern Bool autoindent_enabled;
 extern View *last_selection;
+extern View	*last_focus;
 extern char * notfilename, *notdoubleclick , *notcommand,
 		*notaddress, *notinclude;
 extern char*	whitespace;

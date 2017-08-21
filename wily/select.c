@@ -155,7 +155,7 @@ follow(View *v, ulong oldq, ulong p0, ulong p1, Bool selecting, Mouse *m)
 	if(timer)
 		estoptimer(timer);	
 
-	return range(MIN(p0,p1), MAX(p0,p1));
+	return maybereverserange(p0,p1);
 }
 
 /* Drag out a selection, starting with 'm' (mouse down),

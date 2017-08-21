@@ -70,7 +70,7 @@ snapheight(View*v, int h) {
 	
 	if (v->scroll) {
 		lines = (h - brdr) / fh;
-		if (lines == 0)
+		if ((lines == 0) || (h < tagheight))
 			return 0;
 		else
 			return h;
@@ -82,13 +82,14 @@ snapheight(View*v, int h) {
 void
 view_reshaped(View*v, Rectangle r) {
 	Frame	*f;
+	Bool	need_refresh = (Dx(r) != Dx(v->r));
 	
 	assert(view_invariants(v));
 
 	r = snap(v,r);
 	setrects(v, r);
 	if (ISVISIBLE(v)) {
-		if(text_refreshdir(v->t)){
+		if (need_refresh && text_refreshdir(v->t)) {
 			v->visible.p0 = v->sel.p0 = v->sel.p1 = 0;
 			frdelete(&v->f, 0, v->f.nchars);
 		}
@@ -100,7 +101,7 @@ view_reshaped(View*v, Rectangle r) {
 		/* Last line. */
 		r.max = r.min = frptofchar(f, f->nchars + 1);
 		r.max.x = f->r.max.x;
-		r.max.y += f->font->height;
+		r.max.y = MIN(r.max.y+f->font->height, v->r.max.y);
 		if (r.min.x != r.max.x)
 			cls(r);
 

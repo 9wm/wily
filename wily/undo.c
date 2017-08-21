@@ -261,8 +261,8 @@ update_state(Text *t)
 	if(--state_count)
 		return;
 	if(t->needsbackup) {
-		tag(t, (Bool)did, (Bool)t->did, "Undo");
-		tag(t, (Bool)undone, (Bool)t->undone, "Redo");
+		tag(t, did!=0, t->did!=0, "Undo");
+		tag(t, undone!=0, t->undone!=0, "Redo");
 		tag(t, t->did == t->mark, did==t->mark, "Put");
 	}
 }
@@ -308,7 +308,7 @@ shift(Text *t, Undo **from, Undo **to, Bool change_text)
 static void
 tag(Text *t, Bool before, Bool after, char *s)
 {
-	if(before!=after)
+	if(!before != !after)
 		(after? text_addtool : text_rmtool)(t,s);
 }
 
@@ -343,6 +343,8 @@ reverse(Text*t, Range r, Rstring s)
 {
 	Undo	*u;
 
+	assert(ROK(r));
+	assert(RSOK(s));
 	u = NEW(Undo);
 	u->r.p0 = r.p0;
 	u->r.p1 = r.p0 + RSLEN(s);

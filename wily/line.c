@@ -87,16 +87,15 @@ text_nl(Text *t, ulong pos, int delta) {
 			if(c==NEWLINE)
 				if(!--delta)
 					break;
+		retval = (c != -1) ? t->pos : t->length;
 	} else {
 		Tbgetcset(t,pos);
 		while ( (c=Tbgetc(t)) != -1 )
 			if(c==NEWLINE)
 				if(!delta++)
 					break;
+		retval = (c != -1) ? t->pos+1 : 0;
 	}
-	retval = t->pos;
-	if (!(retval == 0 || retval == t->length))
-		retval++;
 	return retval;
 }
 
@@ -109,5 +108,5 @@ text_startOfLine(Text *t, ulong p) {
 	do {
 		c=Tbgetc(t);
 	} while ( c != -1 && c != NEWLINE);
-	return t->pos ? t->pos+1 : t->pos;
+	return (c != -1) ? t->pos+1 : t->pos;
 }

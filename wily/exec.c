@@ -101,7 +101,7 @@ ex_run(View*v, char *cmd) {
 	if(pipe_views(&cmd, &vout, &vin))
 		return -1;
 	
-	if(openpipes(pout, perr, (Bool)vout))
+	if(openpipes(pout, perr, vout!=0))
 		return -1;
 
 	data_getlabel(view_data(v), label);
