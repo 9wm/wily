@@ -1,0 +1,20 @@
+#!/bin/rc
+# http - get an HTTP URL, retrieve the file, convert it into something that looks
+# vaguely nice, and send it to a Wily window.
+# Usage: http http://site/path/name.html
+
+url = $1
+tmpfile = /tmp/http$pid
+switch ($url) {
+	case http:*
+		eval `{echo $url | sed -e 's!http://\([^/]*\)\(.*\)!host=(\1);file=(\2)!'}
+	case *
+		echo Only http URLs supported >[1=2]
+		exit 1
+}
+
+if (~ $file ())
+	file = /;
+fetchurl $host $file > $tmpfile
+html2wily $tmpfile $url | wcat
+rm $tmpfile

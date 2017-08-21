@@ -1,0 +1,643 @@
+<HTML><HEAD><TITLE>Wily User Manual</TITLE></HEAD>
+<BODY><H1><A HREF="index.html">Wily</A> User Manual</H1>
+
+<H2>Command-line Arguments</H2>
+
+<P><CODE>wily [-p9fn font] [-fn font] [-p9fixed fixedfont] [-a tabsize] [-c columns] [file name...]</CODE>
+
+<DL>
+<DT><B>-p9fn font</B>
+<DD>(or X resource <CODE>p9font</CODE>) set the default
+proportional font.  This must be the name
+of a Plan 9 font file.
+
+<DT><B>-fn font</B>
+<DD>(or X resource <CODE>font</CODE>) set the default
+proportional font.  This must be the name
+of a X font.  The default is  "<TT>variable</TT>"
+
+<DT><B>-p9fixed fixedfont</B>
+<DD>(or X resource <CODE>p9fixed</CODE>) set the monospace font.
+This must be the name
+of a Plan 9 font file.
+The default monospace font is "<TT>fixed</TT>"
+
+<DT><B>-a tabsize</B>
+<DD>set the maximum width of tabs (as multiple of the
+width of the character '0') for the proportional font.
+Defaults to 4.
+
+<DT><B>-c columns</B>
+<DD>set the initial number of columns.
+Defaults to 2.
+
+<DT><B>-e command</B>
+<DD>Run '<TT>command</TT>' on startup.
+
+<DT><B>file name...</B>
+<DD>Start wily with the named files and directories
+open.
+</DL>
+
+<H2>Environment variables</H2>
+
+<DL>
+<DT>SHELL<DD>
+	External commands are sent to the shell for evaluation.
+	Defaults to <TT>/bin/sh</TT>
+<DT>HISTORY<DD>
+	If <TT>$HISTORY</TT> or <tt>$history</tt> are set,
+	commands are written to this file before execution.
+<DT>WILYBAK<DD>
+	Wily uses <tt>$WILYBAK</TT> or <tt>$HOME/.wilybak</tt>
+	as the directory for backups.
+<DT>WMAINTAG, WCOLTAG, WFILETAG, WDIRTAG<DD>
+	If any of these are set, their value is appended to the default
+	text to be added to the tag of the main window, a column,
+	a file window or a directory window, respectively.
+<DT>WILYTOOLS<DD>
+	If <tt>$WILYTOOLS</TT> or <tt>$HOME/.wilytools</tt>
+	exist, they are read and used as a tools patterns file.
+	(See later section).
+<DT>INCLUDES<DD>
+	If set, this is used as a search path for include files.
+<DT>WILYLABEL, w<DD>
+	For external processes, Wily sets <TT>$WILYLABEL</TT> and
+	<TT>$w</TT> to the label of the window in whose context a
+	command is executing.
+<DT>PATH<DD>
+	Wily itself ignores <TT>$PATH</TT>, but when it calls the
+	shell to run external programs the value of <TT>$PATH</TT>
+	is important.
+<DT>WILYFIFO, DISPLAY, TMPDIR<DD>
+	Wily communicates with some other programs using a fifo at
+	a well-known location.
+	
+	<P>The name of the fifo will be <tt>$WILYFIFO</TT> 
+	if this variable is set, otherwise it will be 
+	<tt>/tmp/wilyUSER$DISPLAY</tt>, where USER
+	is calculated from the password file.  If <tt>$TMPDIR</TT>
+	is defined, it is used instead of <tt>/tmp</tt>.
+
+	<P>Wily also sets <tt>$WILYFIFO</TT> so any children
+	it creates will know how to talk to it.
+</DL>
+
+<H2>Appearance</H2>
+	<H3>Column, window, tag, body, resize box</H3>
+
+<A HREF="example.gif">
+<IMG SRC="thumb.gif" WIDTH=174 HEIGHT=96 ALT="screen shot" ALIGN=left></A>
+
+Wily appears as one or more vertical columns, divided into <I>windows</I>
+of scrolling text. Each column or window is headed by a one-line
+<I>tag</I>. The leftmost text of the tag (up until the first whitespace)
+is the name of the window.  Usually this is the name of some file or
+directory. Wily also places other bits of text in the tag, which might be
+useful later as commands.  There is a one-line tag above all the columns,
+which is called the <I>wily tag</I>.
+
+<P>The text in the <I>body</I> of the window may represent a directory,
+a file, the interface to some program like a news reader, or the output
+from a program.
+
+<P>The small square-ish box to the left of the tag is called the
+<I>resize box</I>.  The resize box is used for moving and reshaping
+windows and columns.
+
+<P>If the resize box is filled in, this indicates that the window is
+<I>dirty</I>.  A dirty window contains text which has been modified
+since it was last read from or written to disk.
+
+	<H3>Proportionally spaced, Unicode text</H3>
+
+<P>Text is displayed in a propotionally spaced font by default. There
+is a built in function to toggle with a monospace font when required.
+
+<P>Text is read and written as <A
+HREF="http://www.stonehand.com/unicode/standard/utf8.html">
+UTF8-encoded</A> <A
+HREF="http://plan9.bell-labs.com/plan9/doc/utf.html">Unicode</A>,
+providing some support for editing multi-lingual and scientific text,
+but remaining backwardly compatible with plain 7-bit ASCII text.  See
+<A HREF="http://www.cs.su.oz.au/~matty/9term/index.html">9term</A> for
+an example of another program with Unicode support, with some screen
+shots.
+
+<H2>Notation</H2>
+<I>B1</I>, <I>B2</I> &amp; <I>B3</I> are left, middle, right mouse
+buttons, respectively.  Used as a verb, they mean "click with that
+button".  E.g. "B2 in the command word" means "click with the middle
+mouse button in the command word".
+
+<P><I>B1B2</I>
+means to select some text with B1 held down, then click and release
+on B2 while still holding B1 down.
+
+<P><I>Sweep with B1</I> means to hold down B1, drag it across some text
+to select it, and then release B1.
+
+<P>The <I>last selected text</I> is the text which was most
+recently selected, usually by being swept with B1.
+
+<P>The <I>last selected window</I> is the window containing
+the last selected text.  This is indicated by
+that window having a slightly thicker border.  If the last
+selected text was in a column tag or the wily tag, there is no
+last selected window.
+
+<H3>Context</H3>
+
+All text in wily has a <I>context</I>.  The context is the name of a
+directory associated with that text.  This context is used when
+executing commands and opening files.
+
+<P>If the text is in a window, its context is the name of that window,
+up to and including the last <TT>/</TT>.  So if three windows have the
+names <TT>/usr/gary/+Errors</TT>, <TT>/usr/gary/guide</TT> and
+<TT>/usr/gary/</TT>, the context for all the text in all of these
+windows is the same:  <TT>/usr/gary/</TT>.  Note that the context need
+not be a directory which actually exists.
+
+<P>If the text is in a tag which isn't part of a window
+(i.e. a column tag or the wily tag), the context is the
+name of the directory where wily was started.
+
+<H2>Scrollbars and scrolling</H2>
+
+Scrollbars are proportional, i.e. the size and position of the
+scrollbar's <I>thumb</I> indicates the size and position of the visible
+portion of the text.
+
+<P>Each of the three mouse buttons does something different when
+clicked in the scrollbar.
+
+<P>B1 and B3 are used for <I>relative movements</I>.  B3 moves the text
+next to the mouse pointer up to the top of the window.  B1 moves the
+text at the top of the window down so it is next to the pointer.  Both
+of these rules have the effect that clicking near the top of the
+scrollbar causes small movements, (either up or down) and clicking near
+the bottom causes large movements.
+
+<P>B2 is used for <I>absolute positioning</I>.
+B2 moves the visible part of the text to a point in the
+text proportional to how far down the scrollbar the pointer is.
+That is, clicking at the bottom of the scrollbar with B2 jumps
+to the end of the text, clicking at the top of the scrollbar with B2
+jumps to the beginning of the text.
+
+<P>All of these movements repeat if the mouse button is held down
+in the scroll bar.
+
+<P>The PageUp and PageDown keys scroll up or down
+by about half a page.  The Home and End keys
+scroll to the top or bottom of the file.
+
+<H2>Selecting and editing text (B1)</H2>
+
+Type normally anywhere on the screen to enter text.  The keyboard focus
+follows the pointer in a "point to type" fashion.  That is, the
+characters you type will appear in the tag or body which currently
+contains the pointer.  Position the cursor within text either with
+cursor keys, or clicking once with B1.  Select text by sweeping it with
+B1.  Sweeping text and then typing replaces the selected text with the
+typed text.
+
+<H3>Control Keys</H3>
+<DL>
+<DT>ctrl-u<DD>
+	delete line
+<DT>ctrl-w<DD>
+	delete word
+<DT>Escape<DD>
+	if the selection is null, select all the most recently typed text,
+	otherwise delete the selection
+</DL>
+
+<H3>Double-click</H3>
+
+Double-clicking with B1 can select a word, a line, or the text
+delimited by quotation marks, braces, brackets or parentheses,
+depending on where you double-click.
+
+<H2>Executing commands (B2)</H2>
+
+<H3>Selecting the command</H3>
+
+<P>Sweep text with B2 to execute it as a command.
+
+<P>If you start sweeping some text with B2, then decide you
+<I>don't</I> want to execute it, click B3 <B>before you release B2</B>
+(i.e. a B3B2 chord) to abort.
+
+<P>The <I>command window</I> is the window containing the
+text which was swept with B2.  The context of the command is
+the context of the text swept with B2.
+
+<P>If the text starts with the name of one of the builtin commands,
+that builtin is executed.
+
+<P>Otherwise, the command is executed by forking a subprocess, establishing
+an environment and <TT>exec</TT>ing <TT>$SHELL -c command</TT>.
+
+<H3>Environment for external commands</H3>
+<UL>
+<LI>The current directory is set to the context of the command.
+<LI><TT>$WILYLABEL</TT> and <TT>$w</TT> are set to the name of the command window
+and added to the environment.
+<LI>Standard input is set to <TT>/dev/null</TT>
+<LI>Standard output and standard error are set such that output
+to them ends up being sent to a window in Wily called
+<TT>context/+Errors</TT>
+<LI>The first word of the command will be added to the wily tag to
+indicate which programs are currently running.
+<LI><TT>$WILYFIFO</TT> will be set to the name of the fifo this
+instance of Wily is listening to for messages.  See the <A
+HREF="index.html">main wily page</A> for programmers manuals on how to
+use this messaging interface.
+</UL>
+
+<P>One exception is that if the name of the command starts with
+"<TT>|</TT>", "<TT>&lt;</TT>" or "<TT>&gt;</TT>", standard input and
+output of the command are set up such that the last selection is piped
+through the command, fed into the command or replaced by the output of
+the command, respectively.
+
+<P>For example if a paragraph is currently the last selection,
+executing "<TT>|fmt</TT>" will format the paragraph, executing
+"<TT>&gt;lp</TT>" will print it, and executing "<TT>&lt;cat file</TT>"
+will replace it with "<TT>file</TT>"
+
+<H3>Builtin Functions</H3>
+
+By convention all of the builtin functions start with a capital letter.
+Some of them operate differently
+if called with an argument.
+
+<DL>
+<DT>Put, Get, Putall<DD>
+	Put and Get write the window to disk, or fetch from disk, respectively.
+	If called with an argument, they will use the argument as the
+	filename, instead of the name of the window.
+	
+	<P>Putall writes all dirty files to disk.
+
+<DT>New, Del<DD>
+	Create a new window, or delete a window, respectively.  If New
+	is called with an argument, it will use the argument as the
+	name of a file to create, otherwise the new window is called
+	<TT>context/New</TT>, where the context is taken from the last
+	selection.
+
+<DT>Look<DD>
+	Searches in the command window for literal text.
+	The text it searches for is either the argument to Look, or the
+	current selection in the body of the command window.
+
+<DT>Undo, Redo<DD>
+	Move backward or forwards through the (infinite) Undo log.
+	If called with an argument, these commands repeat until they
+	reach an end of the log, or the text is in the same state as it was
+	the last time the file was read from or written to disk.
+	
+<DT>Newcol, Delcol<DD>
+	Create or delete a column
+
+<DT>Cut, Paste, Snarf<DD>
+	Cut the currently selected text to the X selection buffer,
+	replace the currently selected text with the X selection buffer,
+	or copy the currently selected text to the X selection buffer, respectively.
+
+<DT>Quit<DD>
+	Exit wily.
+
+<DT>Kill<DD>
+	Kill some process which was started from wily.  If called with an
+	argument, Kill that process.  Without an argument, Kill writes a
+	list of possible Kill commands to window <TT>$wilydir/+Errors</TT>
+
+<DT>Font<DD>
+	Toggle between fixed and proportional fonts.  Depending
+	on where Font is clicked, changes the font for a window, a column,
+	or for all the windows on the screen.
+
+<DT>Dotfiles<DD>
+	Toggles whether or not dot files are displayed in directories.  Directories
+	will not be re-read automatically, though.
+
+<DT>Anchor<DD>
+	Adds an address to the tag of the last selected window.
+	If called with an argument, the address is a line address,
+	otherwise the address is a character address.  The address is
+	of the form "<TT>:currentaddress,.</TT>"
+	
+	<P>To select large chunks of text, B1 click at the beginning
+	position, execute Anchor, B1 click at the end position, then
+	click with B3 in the address in the tag.  The anchor may also
+	be used as a bookmark, or just to find the character or line
+	position in a window.
+
+<DT>Split<DD>
+	Split the most recently selected window into two.  Editing actions in
+	one window will be visible in the other.
+<DT>Indent<DD>
+	Toggles autoindent for a window or all windows, depending on the command window.
+<DT>Clear<DD>
+	Deletes all the text in the command window.
+</DL>
+
+<P>The system tries to ensure that the names of some builtin
+commands are added to or removed from window tags as appropriate.
+For instance, when a window becomes "dirty", the word "Put" is
+added to its tag, and removed again when the file becomes clean.
+Similarly, the words "Undo" and "Redo" should appear in the tag of
+a window when and only when they can be executed.
+
+<H2>Open/Search (B3)</H2>
+
+Sweep text with B3 to make Wily try to <I>goto</I> (open or search for)
+the swept text.
+
+<P>The text may be interpreted as:
+<DL>
+<DT>filename:address<DD>
+	Open filename and search in it for address
+<DT>:address<DD>
+	Search for <TT>address</TT> in the window containing the swept text,
+	or in the last selected window, if the swept text was not in a window.
+<DT>filename<DD>
+	Open file or directory <TT>filename</TT> if it exists.
+<DT>includefilename<DD>
+	Open <TT>includefilename</TT> if it can be "massaged" (see
+	below) into the name of an include file (e.g. <TT>stdio.h</TT>)
+<DT>literal<DD>
+	If the swept text is contained in a window, do a literal search in
+	the body of the window for <TT>literal</TT>.
+</DL>
+
+<P>When trying to open a file or directory, the swept file name will be interpreted
+relative to its context.  For example, the text <tt>foo.c:14</tt> in
+a window with context <tt>/usr/gary/src/</tt> will be
+interpreted to mean the address <tt>/usr/gary/src/foo.c:14</tt>
+
+<H3>Addresses</H3>
+
+Wily uses the address and regular expression code from
+<A HREF="http://plan9.bell-labs.com/plan9/doc/sam.html">Sam</A>.
+Please refer to the <A HREF="http://plan9.bell-labs.com/magic/man2html/1/sam">Sam manual</A>
+for a better explanation.
+
+<DL>
+<DT>#n<DD>
+        The empty string after character n; #0 is the beginning of the file. 
+<DT>n<DD>
+        Line n; 1 is the beginning of the file. 
+<DT>/regexp/  ?regexp? <DD>
+        The substring that matches the regular expression, found by
+        looking toward the end (/) or beginning (?) of the file, and
+        if necessary continuing the search from the other end to the
+        starting point of the search. The matched substring may straddle
+        the starting point. When entering a pattern containing a literal
+        question mark for a backward search, the question mark should be
+        specified as a member of a class.
+        
+        <P>Regexps are as defined in
+        <A HREF="http://plan9.bell-labs.com/magic/man2html/6/regexp">regexp(6)</A>
+        in the Plan 9 manual.
+        
+<DT>$<DD>
+        The null string at the end of the file. 
+<DT>.<DD>
+        Dot.  The current selection in a window.
+<DT>address1,address2<DD>
+	The range from the start of address1 (defaulting to the start of
+	the file) to the end of address2 (defaulting to the end of the file).
+	E.g. <TT>:.,</TT> selects from the current selection to the end of file.
+</DL>
+
+<H3>Include Files</H3>
+<P>When searching for a filename, if the filename doesn't exist in the
+context of the search text, Wily also tries to expand the file name
+using a few simple heuristics.
+
+<P>If we are searching for <TT>name</TT> 
+and <TT>name</TT> appears between double-quotes or 
+angle brackets, Wily also
+searches for <TT>name</TT> in the directories in the search path
+$INCLUDES (or
+/usr/include, if $INCLUDES isn't set).
+
+<P>For example, sweeping <TT>stdio.h</TT> between angle brackets will
+open<TT> /usr/include/stdio.h</TT> on the author's system.
+
+<H2>Mouse short cuts</H2>
+
+
+<H3>Cut (B1B2), Paste (B1B3)</H3>
+
+To cut some text into the clipboard, select the text with B1, 
+and <em>while holding it down</em>, click B2.
+The selected text will be cut from the window and copied to the
+clipboard.
+
+<P>Similarly, select some text with B1, and while
+holding it down also click B2, and the selected text will
+be replaced by the contents of the clipboard.  The clipboard will be
+unaltered.
+
+<P>Note that so long as you hold down B1, you can alternately
+Cut and Paste the selected text with B2 and B3.
+A Cut immediately followed by a Paste in this way leaves the
+file unmodified, and has the effect of copying the current
+selection to the clipboard.
+
+<H3>Execute with argument (B2B1)</H3>
+<P>A command can be called with an argument using another mouse chord.
+Sweep the command with B2, and while holding it down,
+click B1.  The last selection will be appended to the command.
+The context of the command and the command window 
+will be set to the context of the last selection (unless the command
+is a builtin).
+
+<P>For example, say I have a script called "<TT>sg</TT>" (short for
+source grep) that <TT>grep</TT>s through all the source files
+in the current directory for a symbol given as an argument.  I can
+then sweep with B1 to select "<TT>printf</TT>" in a source file, then B2B1
+on the word <TT>sg</TT> (anywhere).  The command "<TT>sg printf</TT>"
+will then run in the same directory as the source file.
+
+<H3>Selection expansion</H3>
+<P>A null selection (single click) with B2 or B3 will be expanded to some of the surrounding
+text.
+
+<P>A click inside an existing selection will be expanded to that selection.
+
+<P>This means you can select (with B1)
+some complicated command once,
+and B2 inside
+this selection many times to execute the command repeatedly.
+
+<P>This rule is also helpful when searching through multiple occurrences
+of a piece of text, as clicking with B3 in the most recently found
+instance searches for the next instance.
+
+<P>A click that is not inside an existing selection will be expanded depending
+on which mouse button was used.
+
+<P>A single B2 click
+automatically selects a sensible "word" as the command. Commands can be
+built-in (Capital first letters, by convention) or passed to the shell
+for invocation. 
+
+
+<P>Clicks with B2
+are expanded to select commands, i.e. strings of alphanumeric characters,
+|, &gt; or &lt;. 
+Clicks with B3
+are expanded to select addresses, i.e. strings of alphanumeric characters,
+:, ",".
+
+<H2>Miscellaneous</H2>
+<H3>Window management</H3>
+
+Wily windows are placed automatically using heuristics.  Hopefully most
+of the time the window will be placed somewhere useful.  However,
+windows and columns can be moved and reshaped.  The resize box (the
+little box on the far left of the tag) of a pane or a column may be
+manipulated to move or reshape a window.
+
+<P>Dragging the resize box (with any mouse button) moves the column or
+window to the desired location.
+
+<P>Clicking in a pane's button with different mouse buttons has these
+different effects:
+<DL>
+<DT>B1<DD>
+	the window grows a bit, first taking up any blank space
+	in the column
+<DT>B2<DD>
+	Every window except the desired one is shrunk so that only their tags
+	are visible, leaving more space for the desired window.
+<DT>B3<DD>
+	The window expands to take up the whole column, obscuring all
+	the other windows in that column. Clicking with any mouse
+	button in the window's resize box will undo this effect.
+</DL>
+
+<H3>Cursor Warping</H3>
+
+After a successful search, the text that was found is highlighted, and
+the cursor is warped there, so that to search for the next instance of
+the search text, no cursor movement is required, it is only necessary
+to click the rightmost mouse button again.
+
+Window re-arranging operations warp the cursor to the resize box of the
+window that moved, so the move can be easily refined.
+
+<H3>Back-up files</H3>
+
+<P>Whenever a dirty window is to be deleted, a backup is made.
+This is an alternative to the familiar (and
+often-annoying) "are you <I>sure</I> you want to close this
+window?"  dialog.  A warning message is printed when this happens.
+
+<P>Backup files are kept in directory <tt>$WILYBAK</tt> if it
+exists, or <tt>$HOME/.wilybak</tt>.  In this directory the file
+<tt>TOC</tt> is a table of contents showing what real file each backup
+file maps to.
+
+<H3><TT>.wilytools</TT></H3>
+Wily attempts to read either <TT>$WILYTOOLS</TT> or <TT>$HOME/.wilytools</TT>.  Each line in this file should be either empty, a comment
+(starts with '<TT>#</TT>') or a pattern, a tab, and some arbitrary text.
+The pattern is a regular expression.  Every time Wily creates a new
+window, if the window's name matches one of the patterns, the text after
+the tab on that line will be appended to the tag for that window.
+Wily stops searching after the first match.
+
+<P>Below is the author's <TT>.wilytools</TT> :
+<PRE>
+Mace.*Errors$	Clear mace subject 
+Errors$		Clear
+Mace/in/$	mace subject
+Mace/in		reply wrm wmov
+Mace.*/$	subject 
+Mace/out	deliver 
+Mace		reply	wrm 
+/src/.*/$	def sg 
+News		followup 
+Makefile	make 
+print/$		gv bpr 
+\.py$		ptest
+bin/rc/		775
+</PRE>
+The <TT>mace, reply, deliver and subject</TT> scripts and <TT>Mace</TT>
+directory are to do with reading mail.  <TT>def</TT> and <TT>sg</TT>
+are useful scripts for searching through source files, so they are
+added to the tag of any directory with <TT>src</TT> in its pathname.
+<TT>make</TT> is a logical command to execute when viewing a
+<TT>Makefile</TT>.
+
+<H3>Fonts</H3>
+
+Wily uses two fonts:  a variable-width default font, and
+an alternative fixed-width font.  These may be set with
+command-line arguments or X resources.
+
+<P>Wily first tries to open a Plan 9 font file, given as either
+a -<TT>p9fn</TT> command-line option or <TT>*p9font</TT> X resource.
+Failing that, it uses the <TT>-fn</TT> command-line option or <TT>*font</TT> X resource.
+Failing that, it uses the font "<TT>variable</TT>".
+
+<P>Plan 9 font files are useful for
+supporting the full Unicode range without requiring
+massive fonts.  The font file sets up a font by joining together
+different subfonts.  See the <A HREF="http://www.cs.su.oz.au/~matty/9term/">9term</A> page
+for information about obtaining Unicode fonts and utilities to convert
+other character sets to Unicode.
+
+<P>The format of of a font file is described below:
+(Taken from <TT>font(4)</TT> from the Plan 9 Manual)
+
+<BLOCKQUOTE>
+External fonts are described by a plain text file that can be read
+using <I>rdfontfile</I>.  The format of the file is a header followed by
+any number of subfont range specifications.  The header contains two
+numbers: the height and the ascent.  The height is the inter-line
+spacing and the ascent is the distance from the top of the line to the
+baseline.  These numbers are chosen to display consistently all the
+subfonts of the font.  A subfont range specification contains two
+numbers and a font name.  The numbers are the inclusive range of
+characters covered by the subfont, and name specifies the name of an X
+font suitable for <I>getsubfont</I>.  The minimum number of a covered
+range is mapped to the first defined character of the corresponding
+subfont.  Each field must be followed by some white space.  Each
+numeric field may be C-format decimal, octal, or hexadecimal.
+</BLOCKQUOTE>
+
+<P>Here is the start of the font file the author uses for a monospace font:
+
+<PRE>
+17	14
+0x0000	0x00FF	lucm.latin1.9
+0x0100	0x017E	lucm.latineur.9
+0x0180	0x01F0	matty.latinext.9
+0x0250	0x02E9	lucm.ipa.9
+0x0300	0x0308	matty.gendiacritics.9
+0x0370	0x0372	matty.greekpunc.9
+0x0386	0x03F5	lucm.greek.9
+0x0400	0x0475	misc.cyrillic.9
+</PRE>
+
+<H3>Entering non-ASCII characters</H3>
+
+Refer to the Plan 9 <A HREF="http://plan9.bell-labs.com/magic/man2html/6/keyboard">keyboard(6)</A> manual page, which is mostly how
+it works in wily.
+
+<H2>References</H2>
+<A HREF="http://www.stonehand.com/unicode/standard/utf8.html">UTF8-encoded</A>
+<A HREF="http://plan9.bell-labs.com/plan9/doc/utf.html">Unicode</A>,
+
+<HR>
+<A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>
+</BODY>
+</HTML>

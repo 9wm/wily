@@ -1,0 +1,79 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) mktags %R%.%L% of %D%
+.TH mktags 1 "%R%.%L% of %D%"
+.SH NAME
+mktags \- Create a tag file
+.SH SYNOPSIS
+.B mktags
+.RB [ \-v ]
+.IB file [ ... ]
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I mktags
+prints its version number and date and exits.
+.SH DESCRIPTION
+.I mktags
+creates a tag file called
+.I Tags
+file suitable for used by
+.IR Tag (1).
+Each line in the tags
+file is a tag entry consisting of a name,
+then a space, then a 
+.IR wily (1)
+address.
+.PP
+.I mktags
+recognizes certain C constructions by matching
+extended regular expressions.
+In the following, \et represents the tab character
+and parentheses enclose the name
+.TP
+Function definitions
+^([a-zA-Z_][a-zA-Z_0-9]*)\e(
+.TP
+Function-like macro definitions
+^#[\ \et]*define[\ \et][\ \et]*([a\-zA\-Z_][a\-zA\-Z_0\-9]*)\e(
+.SH RETURNS
+.I mktags
+returns zero if it executes successfully,
+otherwise it returns non-zero.
+.SH EXAMPLES
+Make tags from all of the C source files in the
+current directory
+.DS
+mktags *.c *.h
+.De
+.SH FILES
+.I Tags
+.SH SEE ALSO
+.IR wily (1)
+.IR Tag (1)
+.SH AUTHOR
+Alan Watson (alan@oldp.nmsu.edu)

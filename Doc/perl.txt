@@ -1,0 +1,424 @@
+NAME
+    Wily - Perl extension for the Wily editor/user interface
+
+ABSTRACT
+    This is a Perl5 module that provides a (just about) object-
+    oriented interface to the Wily editor/user interface. Perl
+    client programs can connect to Wily, and send messages to it to
+    manipulate the contents of Wily windows. Client programs can
+    also request that Wily forwards particular kinds of events to
+    the client program for processing.
+
+    This module requires Perl 5.002 or later.
+
+    THIS IS STILL AN ALPHA RELEASE OF THIS MODULE. Nasty things may
+    happen if you use it. Sorry.
+
+INSTALLATION
+    The tar file should be unpacked within the top-level directory
+    of your Wily distribution. This will create a directory "perl"
+    at the same level as, say, Doc, wily, sam and misc. If you've
+    unpacked somewhere else, just move the files across.
+
+    Before you install this module, apply the patch in msg/rpc.patch
+    - this patches ../wily/libmsg/rpc.c to define another function,
+    fileno(). This allows you to select() on input from Wily.
+
+    After that, installation is pretty simple:
+
+            perl Makefile.PL
+            make
+            make test
+            make install
+
+    Note that running the tests requires that you've got an instance
+    of Wily running (and it must be the same release of Wily that
+    you've just compiled the module with.:-) ). Also, to do "make
+    install", you will probably have to be root. That's life with
+    Perl modules.
+
+    If you've got any sense, and you're using wily. 0.12.11, you
+    should also install the patch that is in wily.patch. This fixes
+    a couple of problems with Wily's event handling - see HANDLING
+    EVENTS.
+
+SYNOPSIS
+      use Wily;
+      use Wily qw(...);
+
+      $wily = new Wily;
+      $win = $wily->create('/win/name');
+      %wins = $wily->list();
+      $id = $win->id();
+      if ($win->isattached()) { ... }
+      $win->setname('/mumble');
+      $win->settools('foo bar baz');
+      $win->attach($mask);
+      $win = $wily->open($name, $id);
+      $text = $win->read($p0, $p1);
+      $win->replace($p0, $p1, $newtext);
+      $win->exec($cmd);
+      $win->goto($q0, $q1, $addr, $setdot);
+      $length = $win->length();
+      if ($win->wouldblock()) { ... }
+      $msg = $wily->event();
+      $msg = $win->event();
+      $win->bounce($msg);
+      $wily->bounce($msg);
+      ($type, $msgid, $winid, $p0, $p1, $flag, $string) = unwrapmsg($msg);
+      $msg = wrapmsg($type, $msgid, $winid, $p0, $p1, $flag, $string);
+      $fd = $wily->fileno();
+      $errmsg = $wily->errstr();
+
+DESCRIPTION
+  CONNECTING TO WILY
+
+            $wily = new Wily;
+
+    This connects to Wily. It doesn't do anything else, so you're
+    not going to receive any events, or see any new windows appear.
+    $wily is an object that you can use to communicate with wily,
+    however.
+
+    There is no disconnect operation: this happens automatically
+    when the Perl process dies.
+
+  CREATING NEW WINDOWS
+
+            $win = $wily->create($winname);
+
+    This returns a new object that you can use for performing
+    operations on the window. The window should appear on Wily's
+    screen immediately. You can use $win for sending messages to
+    Wily immediately - see below. Right now, you can't specify
+    whether the window refers to a real or virtual file.
+
+    This method used to be called newwin(), but was renamed to
+    open() as of 0.03. newwin() will still work, but you'll get a
+    non-suppressable warning.
+
+  LISTING EXISTING WINDOWS
+
+            %list = $wily->list();
+            or
+            %list = $win->list();
+
+    The returned hash is the paths of each window currently open in
+    Wily, indexed by their window ids. Note that it doesn't matter
+    whether you use the connection object or a window object to get
+    the list.
+
+  OPENING EXITING WINDOWS
+
+            $win = $wily->open($name);
+            $win = $wily->open($id);
+            $win = $wily->open($name, $id);
+
+    This method returns a window object that is connected to the
+    named window, but not attached to it; you won't receive any
+    events from it yet. You can use the window's name, id or both to
+    specify the window to be opened.
+
+    This method was briefly called oldwin(), which was pretty daft.
+    It's also the reason why newwin() was renamed to create().
+
+  WINDOW IDENTIFIERS
+
+            $id = $win->id();
+
+    This just returns the id of the current window. You only really
+    need this for finding out the window's pathname, with the list()
+    method above. Window objects will return their identifiers, but
+    the connection object will return a fake ID (because it's not
+    really a window). This ID has the value $MainCon, which you can
+    reference if you include it in the "use" statement, or if you
+    explicitly give the package name: $Wily::MainCon.
+
+  CHANGING TAG LINES
+
+            $win->setname($newname);
+            $win->settools($newtools);
+
+    These methods allow you to change the pathname or tool list for
+    a window. They return true if successful. Note that the tool
+    listing is a single string. It should probably be a list, but it
+    isn't, at the moment.
+
+  READING WINDOW TEXT
+
+            $text = $win->read($p0, $p1);
+
+    This method returns a single UTF string, containing the text
+    between character offsets $p0 and $p1 ($p1 is the offset of the
+    first character AFTER the returned range). If the read fails -
+    such as because the range is invalid - the method returns undef.
+
+  WRITING WINDOW TEXT
+
+            $win->replace($p0, $p1, $newtext);
+
+    This method is used for updating window contents. The text
+    specified by the range $p0-$p1 is removed, and $newtext is
+    inserted in its place. If $p0==$p1, this is just a simple
+    insertion. If $newtext is the empty string, then this is just a
+    deletion. Returns false if it fails.
+
+  SEARCHING AND ADDRESSES
+
+            $win->goto($q0, $q1, $addr, $setdot);
+
+    A slightly more complex method, this. It's used for two things:
+    resolving a textual address into a character offset range, and
+    for setting dot. $q0 and $q1 specify the starting range for the
+    search. $addr is the text to search for. It can be any Wily
+    address:
+
+        If Wily manages to find what you're searching for, it sets
+        the values of $q0 and $q1 to its address. If $setdot is also
+        true, it also moves the window's current selection to be
+        where the matched text is.
+
+        Returns true if the pattern is found, and false otherwise.
+
+        There are a couple of bugs in this method. The first is that
+        you should be able to specify that dot will be used, and
+        that $q0 and $q1 are ignored. The second is that if the
+        address happens to reference a different window, it should
+        return the window id of the new window.
+
+  WINDOW CONTENTS LENGTH
+
+                $len = $win->length();
+
+        This method is just a wrapper around goto(), but it seems to
+        be quite handy.
+
+  SENDING COMMANDS TO WILY
+
+                $win->exec($cmd);
+
+        Runs $cmd in the context of the window. $cmd can be a shell
+        command, or it can be a Wily builtin. Returns false if
+        something doesn't work.
+
+  HANDLING EVENTS
+
+  Attaching
+
+        Initially, window objects aren't attached to the window
+        they're associated with. This means that Wily handles all
+        events itself. To start receiving events for a window you've
+        created, use:
+
+                $win->attach($mask);
+
+        Mask specifies which events you're interested in. The events
+        are:
+
+            Just add the events that you're interested in together,
+            as in:
+
+                    $win->attach($WEexec + $WEgoto);
+
+            Again, name the events in the "use" statement, or use
+            $Wily::WEexec, etc.
+
+            Attach returns true for success, and false for failure.
+
+            To attach to an existing window, use:
+
+                    $win = $wily->open($id);
+                    $win->attach($mask);
+
+            where $id is the ID (or the name) of the window you want
+            to attach to. The resulting object is an attached window
+            object (or undef, if something goes wrong).
+
+            Version 0.02 used a method called attachid(), which
+            turned out to just a fairly limited improvement over
+            version 0.01 - you could attach to windows just created
+            with newwin(), but not to existing windows. attachid()
+            has been replaced by a combination of open() and
+            attach(); attachid() will still work, but you'll get a
+            non-suppressable warning message.
+
+            Wily will send goto and exec events directly to your
+            client, without any processing. In contrast, replace
+            events will already have been processed when you receive
+            them; Wily is merely informing you of their occurrence.
+            I'm not sure when wily sends destroy events; so far,
+            I've never seen one. :-)
+
+  Wily patch
+
+            The wily.patch file contains a patch to
+            ../wily/external.c - it fixes two problems. The first is
+            that Wily 0.12.11 didn't expect any clients to bounce
+            WEreplace events (after all, Wily's already processed
+            them), so it didn't check for them. The result was that
+            it reports them as unknown events. This patch just makes
+            Wily ignore them. The other problem is that Wily echoes
+            WEreplace events back to the client that sent them in
+            the first place, if that client is attached to the
+            window. This is a little silly, and means that clients
+            have to be extremely careful about event handling. This
+            patch stops Wily doing this, so you know that if you
+            *cause* the event, you're not going to be notified about
+            it too.
+
+  Detaching
+
+                    $status = $win->isattached();
+
+            This method is to determine whether you're attached to
+            the window. The Wily.pm module is supposed to notice the
+            destroy events coming in from Wily, and mark the window
+            object as detached, but since Wily doesn't seem to send
+            these events, this doesn't work at the moment. As for
+            explicitly detaching, there ISN'T a method for doing
+            that. Nor, apparently, can you change the set of events
+            you want to receive.
+
+  Accepting events
+
+            You receive events with:
+
+                    $msg = $win->event();
+
+            The returned value is an anonymous hash containing the
+            components of the message. The keys are:
+
+    't' - the message type.
+    =item 'm' - message ID.
+    =item 'w' - window ID.
+    =item 'p0' and 'p1' - the range.
+    =item 'f' - the flag.
+    =item 's' - the string.
+            so you can do:
+
+                    if ($msg->{'t'} == $WEexec && $msg->{'s'} eq 'Del') {
+                            ...
+                    }
+
+            The event() method blocks until it receives an event, so
+            you can use:
+
+                    $win->wouldblock()
+
+            which returns true if event() would block.
+
+            For both event() and wouldblock(), if you call them from
+            a window object, they'll only consider events for that
+            window. If you call them from the connection object,
+            they'll return events for any windows. WARNING: This is
+            untested functionality - I *think* it'll queue events
+            for other windows properly, but I haven't had a chance
+            to check it yet. Also, bear in mind that if you have
+            several windows accepting events, you should make sure
+            that you read events for other windows eventually, to
+            drain the queues.
+
+            In the returned hash, 't' is a numeric value, equal to
+            one of the four event types given previously. 'm' is the
+            identifier of the message. I don't think it's actually
+            useful, but Wily might pay attention to it in bounces -
+            I'm not sure.
+
+            'w' is the window identifier of the window this event
+            occurred in. This is necessary if you've got more than
+            one window attached at once, and you're reading with the
+            connection object, instead of the window object.
+
+            'p0' and 'p1' are range involved:
+
+                In both exec and goto events, the range will have
+                been expanded by Wily to something sensible, if it
+                was a single-click event.
+
+                Offhand, I can't remember what 'f', the flag
+                signifies, in events.
+
+                's' is the inserted text, for replace events, the
+                command to be executed in exec events, or the
+                pattern to be searched for, in goto events.
+
+                If you don't like using the returned hash, you can
+                break it up into a list, using the function
+                "unwrapmsg":
+
+                        ($type, $msgid, $winid, $p0, $p1, $flag, $string) = unwrapmsg($msg);
+
+                Note that this isn't a method, which means that you
+                have to name it in the "use" statement, or precede
+                it with "Wily::".
+
+  Bouncing events
+
+                It's quite common that you're only interested in
+                specific instances of a kind of event. For example,
+                with exec events, you probably only care about the
+                commands your client supports. The bounce() method
+                allows you to send an event back to wily, if you're
+                not interesting in handling it:
+
+                        $win->bounce($msg);
+                        $wily->bounce($msg);
+
+                It doesn't matter whether you use the connection
+                object or a window object - the information needed
+                is all in the message anyway.
+
+                If you to construct the message yourself, you can
+                use the function "wrapmsg":
+
+                        $msg = wrapmsg($type, $msgid, $winid, $p0, $p1, $flag, $string);
+
+                Again, this is a function, not a method, so you'll
+                have to import it.
+
+WAITING ON MULTIPLE INPUT SOURCES
+                If you need to select() on Wily's connection,
+                because you've got other input sources to worry
+                about, then you can use:
+
+                        $fd = $wily->fileno();
+
+                This will return a file descriptor that you can use
+                with vec() and select() in the normal Perl way. Note
+                that this relies on a small modification to
+                libmsg/rpc.c, so you have to apply the patch in the
+                file msg/rpc.patch before it'll work (or, in fact,
+                compile).
+
+ERROR MESSAGES
+                The errstr() method is supposed to return any error
+                messages generated by libmsg, but it doesn't appear
+                to be too reliable. Is that ironic, or what?
+
+                        print "Everything's broken: " $wily->errstr(), "\n";
+
+DEBUGGING
+                If you set $Wily::Debugging = 1, then you'll get
+                buckets of diagnostics from the Perl module. If you
+                define -DWILYPERLDEBUG in the Makefile.PLs, and
+                rebuild *everything*, you'll get a little more from
+                the underlying C code, but nothing startling.
+
+TESTING
+                The test script, test.pl, attempts to exercise some
+                of the module's functionality in a controlled way.
+                It doesn't try out everything, because I can't think
+                of a way of testing some of the methods where I can
+                confirm their results reliably.
+
+                You should have an instance of Wily running when you
+                do "make test", and the Wily version must be the
+                same as the one you originally linked the Wily
+                module with, otherwise they probably won't talk to
+                each other.
+
+                Also check at the beginning of the script, for where
+                it sets the value of $WILYFIFO:
+
+                # $
+Steve_Kilbane@cegelecproj.co.uk

@@ -1,0 +1,43 @@
+To read/write unicode text, you need three things:
+your application defaults set correctly, a font file,
+and appropriate X fonts installed.
+
+
+1.  application defaults (either with xrdb or $XAPPLRESDIR/Wily)
+Your application defaults should point to a font file,
+or you can start up wily with
+wily -p9font fontfile
+*p9font:	/usr/pgrad/gary/lib/font/prop.9.font
+*p9fixed:	/usr/pgrad/gary/lib/font/fixed.9.font
+
+2. Font file (e.g. ~gary/lib/font/prop.9.font) 
+The first line of this gives the line height and ascent,
+the lines afterwards are unicode ranges and X font names.
+e.g.
+18	13
+0x0000	0x0019	lucm.latin1.9
+0x0000	0x007F	-bigelow*-lucida-medium-r-*-*-16-*-*-*-p-*-*-*
+0x0000	0x00ff	lucm.latin1.9
+0x0100	0x017E	lucm.latineur.9
+0x0180	0x01F0	matty.latinext.9
+0x0250	0x02E9	lucm.ipa.9
+0x0300	0x0308	matty.gendiacritics.9
+0x0370	0x0372	matty.greekpunc.9
+....
+0x9800	0x99ff	jis.jis9800.16
+0x9a00	0x9bff	jis.jis9a00.16
+0x9c00	0x9dff	jis.jis9c00.16
+0x9e00	0x9fff	jis.jis9e00.16
+0xe000	0xe05f	matty.tengwar.9
+0xfee0	0xff5e	lucm.latin1.9
+0xfffd	0xfffd	pelm.fffd.9
+
+3. X fonts
+The only source I'm aware of (please tell me if you know different)
+for suitable X fonts is 
+ftp://ftp.cs.su.oz.au/matty/unicode/libXg.utf.fonts.tar.gz
+which contains most of the maths and sci. symbols, and
+a lot of CJK glyphs.
+
+Adding these fonts to your font path is a bit system specific,
+good luck :-)

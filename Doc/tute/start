@@ -1,0 +1,304 @@
+
+	START HERE
+
+Hello, welcome to wily.  Once you've finished this
+tutorial you will know nearly all of wily's features, and
+hopefully be addicted.  Wily is quite different from
+any editor you're already familiar with, but it isn't
+difficult to learn the wily way.
+
+TERMINOLOGY
+B1, B2, B3 mean left, middle and right mouse buttons.
+Each window is divided into a _tag_ (the single line of text
+which has the filename in it and is at the top of the window)
+and a _body_ (the big area below the tag where all the "meat"
+of the file is).
+
+SCROLLING UP AND DOWN
+
+	The Scroll-bar
+
+The scrollbar is the vertical bar to the left.  Clicking in it with
+different mouse buttons scrolls the text window.
+
+Move the cursor into the scrollbar next to this line, and click B3.  The
+line should have moved to the top of the window.  Don't move the cursor,
+and click with B1.  The line should move back down so its next to the
+cursor again.  You can see that B1 and B3 in the scrollbar are good for
+_relative_ movement.  How far the text "jumps" depends on how far down
+the scrollbar you click.
+
+Use B2 in the scroll bar for _absolute_ positioning.  For example, to
+get to the top of this file, click with B2 in the scroll bar, at the
+very top of the scroll bar.  Try jumping quickly to the top and bottom
+of the file using B2.
+
+The "thumb" on the scrollbar (the bit which isn't "greyed out")
+indicates where our visible region is in relation to the whole file, and
+how big our visible region is in relation to the whole file.
+
+If you hold a mouse button down in
+the scroll bar, the window will keep scrolling.
+
+	Movement keys
+
+The PageUp and PageDown keys move the text window up or
+down by 1/2 a window.  The Home and End keys move
+the window to the top or bottom of the document.
+The arrow keys move the "selection" by one character
+or line.
+
+Try these out now.
+
+B3 MEANS "GOTO"
+
+B3 (the rightmost mouse button) is also known as the "goto" button.
+Selecting some
+text (or clicking in some text) with the rightmost button
+makes wily "goto" that text.  What this means depends on
+what the text is.
+
+Before you start:  clicking with B3 will create some new
+windows.  When you want to get rid of a window, look
+for the word "Del" somewhere in that window, and click
+on that word with B2.  We'll learn later why this works.
+
+Try clicking with the rightmost mouse button in some of
+these examples:  (NB wily will warp the cursor to the place
+you "goto"--nine times out of ten this is what you want)
+
+hello.c
+hello.c:3
+hello.c:/^main
+hello.c:/p.*f
+FNORD
+Gnu
+FNORD
+$HOME
+
+As you can see, you can "goto" a file, a directory, a
+specific line of a file, a regular expression
+within a file, an environment variable that represents any
+of these, or the next occurrence of a piece of text.  You
+can use the "goto" mouse button on _any_ piece of text
+_anywhere_ in wily.
+
+B2 MEANS "exec"
+
+This is also known as the "exec" button.  Selecting some
+text (or clicking in some text) with the middle mouse
+button makes wily _execute_ that text.  If the command
+which is executed produces any output, it will be sent to
+another wily window (which will be created if necessary).
+
+Try clicking with the middle mouse button in some of these
+examples:
+
+who
+pwd
+id
+date
+./script
+
+	Builtin Functions
+
+Wily provides some builtin functions which it searches for
+first when asked to "exec" some text.  By convention, these
+all start with capital letters.  You will see most of them
+on the screen right now.  For example, to exit wily, (don't
+do this now!), you would click with the "exec" (middle)
+mouse button somewhere in the word "Quit".
+
+To delete a window, click with the "exec" (middle) mouse
+button (but not right now) on the word "Del" somewhere in
+that window.
+
+B1 MEANS "select"
+
+This is also known as the "select" button.  This button is
+used to select text, to be acted on later.  Selected text is
+highlighted (in reverse video).  Text typed with
+the keyboard replaces the current selection.
+Double-clicking with the left mouse button selects a word,
+a line, or the text delimited by quote marks, braces or
+brackets, depending on where the double-click occurs.
+
+The "exec" (middle) and "goto" (right) mouse buttons will
+use an existing selection if they are clicked inside it.
+
+Try this now:  double-click just inside the quotation marks
+in the paragraph below to _select_ the complex command,
+then click with the "exec" (middle) mouse button in the
+selection (reversed text) to execute the command.  Here is
+the command:
+
+"grep -n main *"
+
+Now modify the command above by double-clicking on "main"
+to select it, typing "select", double-clicking just inside
+the quote marks to select the whole command again, then
+clicking inside the selection with the "exec" (middle)
+button.
+
+BUILTIN FUNCTIONS
+
+These are pieces of text that wily recognises and treats
+specially.  By convention, they all start with capital
+letters.  When you deleted windows before by B2ing
+(clicking with B2) the word "Del", you were executing
+that builtin function.
+
+They are often placed somewhere on the screen by
+Wily, but their positions aren't magical:  you could B2 
+the word  'Quit' _anywhere_ on the screen, to quit wily.
+
+The builtin functions are:
+
+Undo and Redo
+	Wily keeps an infinite undo history.  Make a lot of changes to
+	this file (type stuff and delete stuff), and then B2 on Undo
+	repeatedly until the black square disappears from the little
+	box in the top left of this window.  The black square indicates
+	that what you see on the screen is _not_ the same as what is on
+	disk.
+
+Put and Get
+	Use these to write a file to disk, or fetch the old version
+	from disk, respectively.  If the file cannot be written, a
+	diagnostic message will tell you about it.  Putall writes all
+	dirty files to disk.
+
+Newcol and Delcol
+	Used to create and delete columns.
+
+Cut Paste Snarf
+	All of these act on the most recent selection.
+
+Del
+	Delete a window.  If the window represents a file
+	with some changes that haven't been written to
+	disk, a backup copy will be made, and a diagnostic
+	message printed.
+
+Quit
+	Exits wily.  Also backs up any modified files before
+	quitting.
+
+New
+	Create a new file.
+
+Kill
+	Kill a process which was started by wily.  Must be
+	called with the name of the process (as seen at the top
+	left of the wily tag) as an argument.
+
+USING UNIX TOOLS
+
+As well as treating builtin functions specially, the "exec"
+mouse button also treats specially text which starts with
+any of the symbols | < or >
+
+If the command you select with B2 starts with one of these, the command
+is run using the most recent selection as its input or output or both.
+For example, select the entire list below with the left button:
+
+banana
+apple
+pear
+carrot
+
+then click with the middle (exec) button in the command
+below:
+
+|sort
+
+You can use Undo to undo the change and do it again if you
+like.
+
+Similarly, select the paragraph below:
+
+'Twas brillig and the slithy toves
+did gyre and gimble in the wabe.
+All mimsy were the borogroves
+
+and "exec" this command:
+
+>spell
+
+Finally, select (with B1) _and_ exec (with B2) this text:
+
+<date
+
+MOUSE BUTTON COMBINATIONS
+
+This is cool (in my opinion).
+
+A few common functions can be done using combinations of
+mouse buttons.
+
+		Cut/Paste
+
+Try this:  select some text using B1, but keep holding the button down,
+and while still holding down B1, click with B2.  The text will be
+"Cut".  Similarly, select a different position with B1 and click B3 to
+"Paste."  If you want to copy (rather than move some text) select it,
+and while still holding down B1, click with B2 to "Cut", and then
+(still holding the left button) click with B3 to "Paste" it back to the
+original position.  You can then move to the place where you want to
+copy the text, and "Paste" the new copy.  (Again, using B1B3).
+
+Once you're used to it, this is a very comfortable and
+quick way to move text around.  (You could think of it as a 
+two-step drag-and-drop).
+
+		Execute with argument
+
+The other mouse-combination short-cut is a way of giving
+an argument to a command.  If while holding down the middle
+button in some command to be executed, the left button is
+pressed, then the most recent previous selection will be used
+as an argument to that command.
+
+Try it with the commands below--select some text somewhere
+on the screen, then click in the command with the middle
+button, and _while holding it down_ click with the left mouse
+button.  Try it with these commands:
+
+echo
+./findword
+
+(You can B3 on "findword" to have a look at it.)
+
+MOVING WINDOWS AROUND
+
+Windows and columns can be dragged around using the "resize
+box" (the small square at the top left of each window),
+using any mouse button.
+
+Also, clicking in the resize box changes the size of the
+associated window.  Clicking with the left button makes it
+grow a bit, clicking with the middle button makes it take
+up all available room, shrinking the other windows so that
+just their tags are showing, and clicking with the right
+mouse button in a window's resize box makes it take up its
+entire column.
+
+FURTHER INFORMATION
+
+Congratulations!  You've finished the wily tutorial.
+
+Please edit the text below inside the []s, doubleclick
+inside the square brackets to select it all, and click with
+the middle button on >./send_to_gary
+
+[  I finished the wily tutorial.
+I thought it was too fast/too slow/just right.
+I will definitely/maybe/never use wily again.
+I think the interface is interesting/horrid/cool.
+And furthermore ...]
+
+For more information, B2 the line below:
+
+netscape http://www.cs.su.oz.au/~gary/wily
+
+To finish up, click in the word Quit with B2.

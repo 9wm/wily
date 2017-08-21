@@ -1,0 +1,7 @@
+*width: 500
+*height: 600
+*font: fixed
+*scrollForwardR: true
+*saveUnder:	true
+*backingStore:	WhenMapped
+

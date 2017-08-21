@@ -1,0 +1,79 @@
+this is a package of tools for communicating with wily using the Tcl
+library.  the file wily.c defines a thin veneer round wily's libmsg.
+
+this compiles with  wily-0.13.1[89] with tclversion 7.4.
+
+the files wtcl.c and wtk.c compile against wily.c to give a tclsh alike
+with wily support called wtcl, and a wish alike with wily support called
+wtk.
+
+the only addition to standard tcl/tk is the ``wily'' command.  this has
+several subcommands
+
+wily init
+
+	connects to wily.  should be called before any other wily command
+
+wily isconnected
+
+	checks that we can still talk to wily.  returns boolean.
+	
+wily list
+
+	returns a list of window ids (integers).
+
+wily name <id>
+
+	returns the name of the window with given id.
+
+wily new <filename>
+
+	opens a new window with given filename.
+
+wily attach <id>
+
+	offer to collect events for window with given id.
+	we collect _all_ events.
+
+wily setname <id> <name>
+
+	set the name of window with given id to the given new name.
+
+wily settools <id> <tools>
+
+	appends the given tools to the tools for window with given id.
+
+wily read <id> <begin> <end>
+
+	returns the text between points <begin> and <end> in window <id>.
+
+wily replace <id> <begin> <end> <text>
+
+	replaces the text between points <begin> and <end> in window
+	id with <text>.
+
+wily exec <id> <command>
+
+	just as if <command> had been b2'd in window <id>.
+
+wily goto <id> <string> <bool>
+
+	as if string had been b3'd in windows <id>.  if <bool>
+	is true then we jump to and select the result.
+
+wily length <id>
+
+	the length of the text in window <id>
+
+wily wouldblock
+
+	return boolean.  true if there is no event in queue.
+	false if there is.
+
+wily event
+
+	returns a string describing the event.
+
+wily bounce
+
+	return the last event received back to wily.

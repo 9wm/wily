@@ -1,0 +1,19 @@
+srcdir=@srcdir@
+VPATH=@srcdir@
+OBJECTS= getmsg.o mail.o reader.o mbox.o solaris.o utils.o
+TARGET=mreader
+CC=@CC@
+CFLAGS=-I../include -I.. -I$(srcdir)/../include @X_CFLAGS@
+MYLIBS=../libmsg/libmsg.a ../libXg/libXg.a
+all: $(TARGET)
+$(TARGET): $(OBJECTS) $(MYLIBS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(MYLIBS) $(LIBS) @X_LIBS@ -lXt @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@
+
+purify:	$(OBJECTS)
+	purify -userpath='.:../libtext:../libframe:../libXg' $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(MYLIBS) $(LIBS)
+
+$(OBJECTS): ../include/libmsg.h
+clean:
+	rm -f *.o core *pure*
+nuke: clean
+	rm -f $(TARGET)

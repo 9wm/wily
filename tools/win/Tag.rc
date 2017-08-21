@@ -1,0 +1,36 @@
+if ( ! ~ $#* 1 ) {
+	echo >[1=2] usage: Tag [-v] name
+	exit 1
+}
+
+if ( ~ $1 -v ) {
+	# @(#) Tag %R%.%L% of %D%
+	echo Tag %R%.%L% of %D%
+	exit 0
+}
+
+if ( ! test -f Tags ) {
+	echo >[1=2] Tag: no Tags file
+	exit 1
+}
+
+name = $1
+
+ifs = '
+'
+tags = `{ egrep '^'^$name^' ' Tags | sed 's/[^ ]* //' }
+switch ( $#tags ) {
+case 0
+	echo >[1=2] Tag: no tag for $name
+	exit 1
+case 1
+	wgoto $tags
+	exit
+case *
+	echo >[1=2] Tag: multiple tags for $name:
+	wgoto '+Errors:$'
+	for (tag in $tags) {
+		echo >[1=2] $tag
+	}
+	exit 1
+}

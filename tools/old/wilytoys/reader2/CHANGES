@@ -1,0 +1,80 @@
+0.3 - 0.4
+=======
+Newsreader has been significantly improved, to the point where I actually
+use it for reading news. It's got a long way to go, but I can actually bear
+to use it, so it can't be all that bad.
+
+Both readers give feedback when they're loading - makes it slightly
+less stressful watching the newsreader load, anyway.
+
+Addresses are "parsed", for want of a better word, to give name or
+email address in the message lists.
+
+0.2 - 0.3
+=======
+
+*BUG WARNING* In at least one case, I've noticed that this appears to
+have lost mail in a race condition. Faces announced that new mail had
+arrived, I did a commit, and nothing new appeared. :-( I'm not aware
+of this happening more than once, but how do you tell? I recommend
+using a .forward file or some similar mechanism to keep a separate
+copy of your mail, so that you've got a day or so's backlog in case someone
+claims something went missing. I don't know how to reproduce this,
+so I've got no idea how to fix it. Right now, I'm not too worried - no one
+else has appeared to send me anything which has vanished, and the
+message I did lose was from my boss. :-)
+
+
+Added lots more assertions and a DEBUG option for the Makefile, which
+produces lots of gibberish.
+
+Added "next" and "prev" commands, for advancing through the mailbox.
+This occasioned a change in how it determines which window to display
+a message in. The rule is:
+	- if you next/prev in an article window, you'll re-use that window,
+	and get the next/previous article according to the number of the
+	article in that window.
+	- if you next/prev in the list window, you'll get a new window, and
+	it'll give you the next/previous article according to the line currently
+	selected in the list. (BUG: doesn't change *which* item in the list is
+	currently selected; this is because that causes a cursor warp, too).
+	- If you B3 on a subject line, you get a new window for the article
+	indicated.
+
+A News reader is included. This should read groups and articles ok,
+and allows you to post articles or reply via email. It works, but the
+behaviour of "next" and "prev" is broken. Right now, it uses
+.testnewsrc instead of .newsrc, because it's too broken for daily
+use.
+
+When posting a mail message, changes the tag to "Sending...", so you
+know something is happening.
+0.1 -> 0.2
+========
+
+Filters out most common garbage headers (toggle this with allheaders).
+
+Can delete/undelete/save multiple messages, by sweeping them.
+
+[Un]delete is a lot less effort on the screen updates.
+
+Commit now writes changes back to the mailbox, without quitting. Doesn't
+read in new mail, though.
+
+Rescan reads in any new mail that has arrived. Doesn't write any current
+changes, though.
+
+Rescans your mailbox for new mail automatically. Does this every 60
+seconds, by default. You have to hack mail.h to change this...
+
+If you're running it in non-multiart mode (default), then it tries to avoid
+trashing your composition windows when you pull up a message window.
+
+savefile has a default parameter: $SAVEFILE if set, or $HOME/mbox
+otherwise.
+
+Sets the title of article windows to just mailboxname/msgnum, because
+the From: lines are too long.
+
+Uses MAXPATHLEN instead of FILENAME_MAX, because FILENAME_MAX
+is way too small on some machines.

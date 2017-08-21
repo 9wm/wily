@@ -1,0 +1,12 @@
+#!/bin/sh
+echo Here is some output produced by a shell script called "script"
+echo
+echo 'Click with the "goto" (rightmost) mouse button'
+echo on the word script to have a look at the program
+echo
+echo It uses grep to find all the places the word "mouse" appears in the
+echo file "start".
+echo Click with the "goto" button in any of the bits of text like
+echo start:42 to go to one of the lines where the word "mouse" is used.
+echo
+grep -n mouse start /dev/null

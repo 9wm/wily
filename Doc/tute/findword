@@ -1,0 +1,4 @@
+#!/bin/sh
+# list all places that $1 appears in all the files in the
+# current directory.
+grep -nw $1 *

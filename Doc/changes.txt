@@ -1,0 +1,108 @@
+0.13.12 started this file
+* Each line in $WILYTOOLS or $HOME/.wilytools can contain 
+either a comment (starts with whitespace or '#') or a regexp,
+then a tab, then some tools (i.e. some text) which will be put
+into the tag of any window whose label matches the regexp.
+The _first_ regexp match wins.
+0.13.14
+* Scrolling forward works better
+* plugged some memory leaks
+0.13.15 
+fixed silly bug in text_read: Axel Belinfant 
+patch from Steve Kotsopoulos - $WMAINTAG and $WCOLTAG 
+removed last_escape_select 
+newline only special in tag now 
+h version 
+Version builtin removed 
+no longer warps cursor when expanding tile after typing in it 
+utfwrite handles short writes -- Bill Trost 
+wilytools have newline stripped, b2b1 on Anchor selects line 
+changed mouse_expand: clicking _near_ a selection hits the selection 
+use view_cut a lot 
+removed some functions in keyboard.c 
+use view->autoindent to decide to autoindent a view 
+Indent builtin 
+option -a to set tabsize 
+0.13.16 
+bugfix with B2B1 
+removed Version from default wilytools 
+word-delete seems saner to me 
+B3 checks for local files before include files 
+0.13.17 
+splitting data.c up 
+tidied a few functions in data.c 
+cloned windows share the same tag, modifying label works better 
+tag modification seems to be working 
+0.13.18 
+ctrlu patch -- Bill 
+removed some dead code from mouse.c 
+renamed globals.h global.h 
+updated MANIFEST 
+moved columnate to from dir.c to util.c 
+moved more out of dir.c 
+removed a few syntax errors 
+broken view.c into different files 
+renamed view_left view_hscroll 
+moved most of selection_fd to text_fd 
+more from view.c to util.c 
+removed selection_fd altogether 
+Kill patch from Steve_Kilbane 
+replaced view_isvisible with ISVISIBLE 
+compiles with view.c all split up 
+renamed the view-related files 
+renamed the view-related files 
+0.13.19 
+scrollbugfix from Steve_Kilbane 
+removed text.h from view.c 
+tinkering with vgeom 
+moved stuff from vsearch to text2 
+moved b3 from mouse.c to vsearch.c 
+view_goto simplified 
+lotsa internal changes 
+rename data_labelmodified to data_setlabel 
+rename data_backall to data_backupall 
+broke search.c into click.c and sambuf.c 
+removed text_clear 
+removed text_delete 
+split and tidied text2.c 
+uses sam regexp 
+0.13.20 
+remove garyfind hack
+bugfix undo.c (was causing core dumps)
+msg_new now matches doco
+0.13.21
+exec dies if cannot chdir 
+tile patch from Bill Trost
+0.13.22
+utfwrite handles write returning
+_all_ the resize boxes of a window are updated when the window is written
+right undo stuff happens for directory read
+misc. patches from Bill Trost
+realpath uses cached value of cwd
+tag_init no longer uses fgets
+0.13.23
+
+selected window display patch -- Bill Trost 
+directory speedup patch -- Bill Trost 
+aesthetic improvements patch -- awatson@NMSU.Edu 
+made Alan's and Bill's aesthetics patches cooperate a bit 
+noutput bugfix -- Bill Trost, Alan Watson 
+0.13.24
+
+make sure anchor is at end of tag for new windows 
+organising builtins
+bugfix: scrollbar geometry a bit wierd
+separated out all operations on lines into line.c 
+scrolling backwards through a file now much faster
+text_linenumber simplified 
+tute/start updated a bit
+0.13.25
+stop complaining if cannot open .wilytools -- awatson@NMSU.Edu
+prettier scrolling, wily -e -- awatson@NMSU.Edu 
+text_replace in tag doesn't get forwarded 
+fix the problems with switching between Fonts -- Bill Trost 
+append WMAINTAG, rather than replace it -- Steve Kotsopoulos 
+undo patch --Bill
+fixes to above --  Gary 
+getname, gettools -- gary
+0.13.26

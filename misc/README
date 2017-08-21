@@ -1,0 +1,5 @@
+Wily.ad		Sample X Application Defaults file.  Needs to be edited.
+fixed.9.font	My fixed-width font file (at one stage)
+prop.9.font	My proportional font file (at one stage)
+wily.xpm		An xpm suitable for a desktop icon
+wily2.xpm	Another xpm suitable for a desktop icon

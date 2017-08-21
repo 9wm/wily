@@ -1,0 +1,244 @@
+.de F
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de L
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de FR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de LR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de CW
+.ft B
+..
+.\" This is gross but it avoids relying on internal implementation details
+.\" of the -man macros.
+.de TF
+.IP "" \w'\fB\\$1\ \ \fP'u
+.PD0
+..
+.de EX
+.CW
+.nf
+..
+.de EE
+.fi
+..
+.\" delete above this point if your system has F, L, FR, LR, CW and TF macros
+.TH CACHECHARS 3G
+.SH NAME
+cachechars, Subfont, Cachesubf, Fontchar, Font  \- font utilities
+.SH SYNOPSIS
+.nf
+.B
+#include <libc.h>
+.B
+#include <libg.h>
+.PP
+.ta \w'\fLCacheinfo 'u
+.PP
+.B
+int  cachechars(Font *f, char **s, XChar2b *c, int n, int *widp, ushort *fp)
+.fi
+.SH DESCRIPTION
+A
+.I Font
+may contain too many characters to hold in memory
+simultaneously.
+The graphics library and X server
+cooperate to solve this problem by maintaining a cache of recently used
+character images.
+The details of this cooperation need not be known by most programs:
+.I xtbinit
+and its associated
+.I *p9font
+X resource,
+.I rdfontfile,
+.I charwidth,
+.I string,
+and
+.I ffree
+are sufficient for most purposes.
+The routines described below are used internally by the graphics library
+to maintain the font cache.
+.PP
+A
+.B Subfont
+may be considered to be a set of images for a contiguous range of characters,
+stored as a single bitmap
+with the characters
+placed side-by-side on a common baseline.
+It is described by the following data structures.
+.IP
+.EX
+.ta 6n +\w'Fontchar 'u +\w'bottom;   'u
+typedef
+struct Fontchar {
+	ushort	cwidth;	/* width of glyph */
+	uchar	top;	/* first non-zero scan-line */
+	uchar	bottom;	/* last non-zero scan-line */
+	char	left;	/* offset of baseline */
+	uchar	width;	/* advance to next char's origin */
+} Fontchar;
+
+typedef
+struct Subfont {
+	short	minrow;	/* first character row in font (for X subfonts) */
+	short	mincol;	/* first character col in font (for X subfonts) */
+	short	minchar;	/* first char code in font (for X subfonts) */
+	short	maxchar;	/* last char code in font (for X subfonts) */
+	short	width;	/* number of chars in row (for X subfonts) */
+	short	n;	/* number of chars in subfont */
+	unsigned char height;	/* height of bitmap */
+	char	ascent;	/* top of bitmap to baseline */
+	Fontchar	*info;	/* n+1 character descriptors */
+	int	id;	/* of font */
+} Subfont;
+
+.EE
+.PP
+The actual bitmap for each character is stored on the server
+but the metrics associated with character
+.I c
+are cached locally in
+.B
+subfont->info[\fIc\fP]\fR.
+When a character is displayed at
+.B Point
+.B p
+in a bitmap,
+the character rectangle is placed at
+.BI (p.x+ i ->left,
+.B p.y)
+and the next character of the string is displayed at
+.BI (p.x+ i ->width+( i +1)->left,
+.BR p.y) .
+The baseline of the characters is
+.L ascent
+rows down from the top of the subfont bitmap.
+Each
+.B Fontchar
+has two widths associated with it:
+.I width
+is the width of the rectangular bitmap
+to contain the character;
+.I cwidth
+is the true width of the character, that is,
+the number of pixels between the leftmost and
+rightmost pixels of the character glyph.
+.PP
+A
+.B Font
+consists of an overall height and ascent
+and a collection of subfonts together with the ranges of runes (see
+.IR utf (4))
+they represent.
+Fonts are described by the following structures.
+.IP
+.EX
+.ta 6n +\w'Cachesubf 'u +\w'height;   'u
+typedef
+struct Cachesubf {
+	Rune	min;	/* rune value of 0th char in subfont */
+	Rune	max;	/* rune value+1 of last char in subfont */
+	char	*name;
+	Subfont	*f;	/* attached subfont */
+} Cachefont;
+
+typedef
+struct Font {
+	char	*name;
+	uchar	height;	/* max height of bitmap, interline spacing */
+	char	ascent;	/* top of bitmap to baseline */
+	char	width;	/* widest so far; used in caching only */	
+	char	ldepth;	/* of images */
+	short	id;	/* of font */
+	short	nsubf;	/* number of subfonts */
+	Cachesubf	*subf;	/* as read from file */
+} Font;
+.EE
+.PP
+The
+.LR height ,
+.LR ascent ,
+and
+.L ldepth
+fields of Font are described in
+.IR graphics (3).
+.L Subf
+contains
+.L nsubf
+pointers to
+.BR Cachesubfs .
+A
+.B Cachesubf
+connects runes
+.L min
+through
+.LR max ,
+inclusive, to the subfont
+.LR name ;
+it corresponds to a line of the file describing the font.
+.PP
+The image for rune
+.I r
+is found in position \fIr\fR\(mi\fLmin\fR\(pl\fLminchar\fR of the subfont.
+.PP
+For each font, the library, with support from the
+graphics server,
+maintains a list of
+subfonts.
+The
+.L width
+of a font is the maximum of the horizontal extents of the characters
+in the cache.  [
+.L width 
+is unused in the X implementation of libg.]
+.I String
+draws a string by calling
+.I cachechars
+and emitting a sequence of
+X font indices to draw.
+.I Cachechars
+calculates the subfont/index pairs for the characters pointed to by
+.IR *s .
+It calls
+.I getsubfont
+to fetch subfonts which are not yet in the subfont list of
+.IR f .
+.I Cachechars
+translates the character string into a set of subfont/index pairs.
+It loads the character indices into the array
+.IR c ,
+up to a maximum of
+.I n
+indices or the length of the string.
+It also loads the corresponding element of
+.I fp
+with the subfont index for each character.
+.I Cachechars
+returns in
+.I c
+the number of subfont indices emitted,
+updates
+.I *s
+to point to the next character to be processed, and sets
+.I *widp
+to the total width of the characters processed.
+.I Cachechars
+may return before the end of the string if it cannot
+proceed.
+It can return zero if it is unable to make progress because
+a character code does not covered by any subfont range.
+.SH SEE ALSO
+.IR graphics (3),
+.IR balloc (3),
+.IR bitblt (3),
+.IR font (4).
+.SH DIAGNOSTICS
+All of the functions use the graphics error function (see
+.IR graphics (3)).

@@ -1,0 +1,332 @@
+
+ * The authors of this software are Rob Pike and Howard Trickey.
+ *		Copyright (c) 1992 by AT&T.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose without fee is hereby granted, provided that this entire notice
+ * is included in all copies of any software which is or includes a copy
+ * or modification of this software and in all copies of the supporting
+ * documentation for such software.
+ * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+ * WARRANTY.  IN PARTICULAR, NEITHER THE AUTHORS NOR AT&T MAKE ANY
+ * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+ * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+
+This is an X11 version of Rob Pike's editor, sam.  Documentation describing
+its use and construction are provided in subdirectory doc.  The file doc/sam.1
+contains the manual page; doc/sam.tut.ms is a tutorial that can be
+formatted with troff -ms.  It substitutes Bold and Italics for the
+fonts named CW and CS; if your system has these fonts, remove the
+CW and CS macros at the beginning of the file. The files doc/sam.ps
+and doc/se.ps are postscript versions of published papers describing
+sam and structural regular expressions.  These papers reflect sam's
+capabilities at the time of publication several years ago; while the
+general description remains accurate, some functions may have changed
+or been removed.  Other files in the doc directory contain manual pages
+for the library packages used by sam.
+
+Sam is composed of two programs: sam itself, which does the command processing
+and file manipulation; and samterm, which controls the display and 
+interacts with the user.  You can run sam on one machine and samterm on another
+connected via remote execution.
+
+This version of sam is based on the Plan 9 implementation.  Its
+design and expression reflect the functionality of the Plan 9 environment;
+most notably, characters are represented internally by 16-bit values called
+Runes.  Header files include/u.h and include/libc.h and source files
+libframe/misc.c, libXg/rune.c, sam/unix.c and samterm/unix.c contain
+code that insinuates sam into the Unix world.  Two other files,
+sam/plan9.c and samterm/plan9.c, contain Plan 9-specific code; they
+are not used in the Unix version of sam and are provided as examples
+of the Plan 9 interface.
+
+Sam requires an ANSI/POSIX-compatible C compiler and libraries.  We have
+found that some commercial compilers which claim to meet this standard are
+deficient.  For our sanity, we only port sam to the standard; it is up to
+you to modify it for non-standard aspects of your local environment.
+Hints for some non-standard systems are provided at the end of this file.
+The handling of varargs is the source of many porting problems.  We advise
+you to inspect the functions dprint and fprint in the files sam/unix.c and
+libframe/misc.c to ensure the accuracy of the implementation.  We also
+encourage you to look at function newtmp() in sam/unix.c which creates
+a sam temporary file.  We prefer to use the tempnam() function; it allows
+us to select the directory where the temp file is placed, a useful
+optimization for systems with small local disks.  However, tempnam() is
+not a POSIX function, so you may have to use tmpfile() or a similar
+function to create the temporary file.
+
+The typedefs for uchar, ushort, and ulong defined in include/u.h, may conflict
+with exisiting definitions in include file <sys/types.h> on some systems.
+If this occurs, remove the offending definitions from include/u.h.
+
+The distribution consists of six directories:
+
+	sam - The source for sam.  It loads against libXg to pick
+		up some utility routines.
+
+	samterm - The source for samterm.  It loads against libframe,
+		libXg, and your local X11 libraries.
+
+	libframe - The source for the frame library.  This library is used
+		by samterm so it must be made first.
+	
+	libXg - The source code of the graphics library and some general
+		utility modules.  Header file u.h provides much of the
+		interface between sam and the local environment.  It is
+		included in every source file.  Sam's graphics
+		operations are implemented by Plan 9 libg functions.  This
+		library emulates those functions using X11 operations.
+		You might find libXg to be independently useful to tame the
+		horrors of X11 programming.  You can put it anywhere; the
+		samterm makefiles assume it is in ../libXg. libXg must
+		be made first.
+
+	include - header files.
+
+	doc - The documentation for sam and the libraries.
+
+Each source directory contains makefiles for several typical architectures.
+The master makefile in the top directory builds the subdirectories in
+proper order.
+
+Most customization effort is confined to configuring the makefiles.
+You can usually minimize your work by copying the makefile for
+your architecture to Makefile and then editing a couple of lines.
+For example, to install sam on a Sun, go to each source subdirectory,
+copy Make.sun to Makefile, and customize each Makefile.
+
+Most of the time only the makefiles need configuration.  Occasionally, it may
+be necessary to twiddle some of the macros and pre-processor magic in
+include/u.h or include/libc.h.  In unusual cases, you may have to massage
+system-dependent code in files libXg/misc.c, sam/unix.c, or samterm/unix.c.
+Of course, systems with non-standard compilers or libraries may require
+minor modifications to any or all of the source files.
+
+Variables in each makefile define most configuration-dependent parameters; each
+is explained by a comment in the makefile.  The RSAMNAME variable in
+sam/Makefile contains the name of the sam executable; this is only used when
+executing sam remotely.  If sam is stored in the same path on every machine in
+your network or you use symbolic links to make it look like it is, this variable
+should specify the full path name of the executable. If sam resides in various
+directories on different machines, you've got a problem.  The best strategy is to
+simply set the name of the file containing sam (usually, "sam") without a path
+component and rely on the users to set the directory in their PATH on the remote
+system.  Unfortunately, this fails when the Berkeley rsh is used as the remote
+execution agent because it neglects to evaluate the user's profile in some
+situations.
+
+If a sam session terminates abnormally, sam creates a shell script named
+sam.save in the user's home directory.  When this file is executed, it asks
+the user about each file and restores those selected.  The files are restored
+with the names as they were known to sam; usually you will want to move
+sam.save to the last directory you had changed to in sam and restore the files
+from that point.  The restoration script relies on a second script provided
+in sam/samsave.  The SAMSAVEDIR variable in the sam Makefile contains the name
+of a directory to hold this script.  The SAMSAVE variable contains the shell
+command to unpack each file; the command works with both the Bourne shell or
+Tom Duff's 'rc'.
+
+After configuring the makefiles, change to the top-level directory and
+type "make". Typing "make install" installs sam, samterm and samsave in
+their permanent homes.
+
+During testing, the path of samterm may be specified using the -t command line
+option to sam.  Similarly, the path of sam itself may be specified using the
+-s command line option; this is handy for testing the remote execution feature.
+
+You may want to install Sam.ad as "Sam" in the system application
+defaults library (which will have some name like /usr/lib/X11/app-defaults)
+or your own home directory, if you don't have permission to write in
+app-defaults.  Sam.ad can be edited to give default values for things
+like the starting height and width, the font, and the foreground and
+background colors.  Currently, only the -geom X11 parameter can be
+specified on the command line.  New X11 parameters can be easily added
+by including the first character of the parameter in the switch statement
+in main() in file sam/sam.c.  Valid parameter strings are passed to
+samterm and then directly to X11 for interpretation.
+
+The scripts 'B.sh' and and 'B.rc' for the Bourne Shell and 'rc', respectively,
+send a 'B' command to a runninng instance of sam and optionally position the
+file to a selected line.  The scripts are located in the sam subdirectory;
+install one or both in the appropriate directory depending on the conventions
+of your site.  There is no installation target for them in the makefiles.
+These commands require a POSIX-compliant named pipe facility; if your
+system lacks this capability, replace the code in exstart() in
+samterm/unix.c with a 'return' statement and throw away B.sh and B.rc.
+
+We have successfully made this distribution for IRIX 4.0.1, SunOs 4.1.1
+and Mips 4.5.2 at our site.  Additionally, Rich Salz, Dan McDonald,
+Alain Kagi and Ed Kubaitis have contributed prototype makefiles for
+other architectures.  We are unable to test and verify them but
+they provide a good starting point for customizing a makefile.
+
+The original protocol between sam and samterm assumed that memory addresses
+and longs were 32 bits.  Dave Hanson removed this dependency from the
+protocol allowing sam to run on 64-bit processors.  However, other
+dependencies on structure alignment remain.  If you are installing sam
+on a processor with 64-bit addresses, please read the comment immediately
+preceding the declaration of the Block data structure in file sam/sam.h
+(at approximately line 85), and fiddle with the declaration appropriately.
+
+Rob Pike designed and implemented the original Unix version of sam and the
+current version ported from Plan 9.  Howard Trickey provided the X
+version of the graphics library, libXg.  Matty Farrow and his colleagues
+at the University of Sydney extended libXg to support Runes.  Boyd Roberts
+supplied the external command interface and the shell scripts for
+the 'B' command. Doug Gwyn contributed many useful ideas to the X
+implementation of sam. James Clark provided the simulations of the V10
+Unix Man macros at the beginning of each manual page.
+
+Matty Farrow of the University of Sydney has implemented 9term, an X11
+version of a Plan 9 window.  It is available via anonymous FTP from
+ftp.cs.su.oz.au in directory /matty/unicode.  Chris Siebenmann of the University
+of Toronto runs the sam-fans mailing list, a source of tips, bug patches,
+controversy and gossip among sam users.  Send your e-mail address to
+sam-fans-request@hawkwind.utcs.toronto.edu to enroll in the list.
+
+Andrew Hume has written tcs, a Unix utility which converts input
+text in one user-specified character set to output text in another
+user-specified character set.  It is useful for converting text represented
+in a variety of standard character set encodings to UTF, the standard
+character set accepted by sam.  The tcs source package is available
+via ftp in file dist/tcs.shar.Z on research.att.com.
+
+In general, we are uninterested in adding further capabilities to sam; we
+provide the source to allow you to customize it if you wish to "improve" it.
+Please send bug fixes and comments to:
+
+Bob Flandrena, bobf@research.att.com
+
+-----------------------------------------------------------------------------------
+	Following are modifications necessary to paper over compiler or
+	library deficiencies to complying with the ANSI/POSIX standard.  Please
+	inform us of any other changes.
+-----------------------------------------------------------------------------------
+
+			SUNOS Release 4.1.1
+
+The implementation of realloc does not conform to ANSI semantics.
+Sam assumes
+
+	realloc(0, n);
+
+is equivalent to malloc(n).  Replace each occurrence of
+
+	p = realloc(p, n);
+
+with:
+	p = ((p == 0) ? malloc(n) : realloc(p, n));
+
+or something equivalent.  Several files that include the X11
+Intrinsics header file must have the variable SYSV defined
+before the inclusion.  The shell script sun.ed attempts to
+automatically apply these patches when run from the top directory.
+
+Older versions of gcc lack the '-fno-builtin'.  If this describes
+your site, remove the flag from the CFLAGS variable in Make.sun.
+
+Because the standard Sun compiler is not Ansi-compatible, frantic
+Sun users have been forced to cobble together their own compiling
+environment.  Unfortunately, the resulting system configurations
+have little in common and it is virtually impossible to provide a
+universal build procedure.  We suggest the use of gcc; other
+than that, Sun users are, as always, in the dark and on their own.
+
+-----------------------------------------------------------------------------------
+
+			MIPS OS Release 4.5.2
+			(and DEC ULTRIX Version 4.2A)
+
+There are two major deficiencies with the Mips implementation: the use of the
+old System V implementation of varargs and a compiler bug that botches the
+parsing of certain typedeffed parameters in function prototypes.
+
+The following changes are required:
+
+In sam/unix.c, replace function dprint with the following code:
+	void
+	dprint(char *fmt, int va_alist)
+	va_dcl
+	{
+		va_list args;
+		char buf[BLOCKSIZE];
+	
+		va_start(args);
+		vsprintf(buf, fmt, args);
+		termwrite(buf);
+		va_end(args);
+	}
+
+In libframe/misc.c, replace function fprint with the following code:
+	void
+	fprint(int fd, char *fmt, int va_alist)
+	va_dcl
+	{
+		va_list args;
+		char buf[2048];			/* pick reasonable blocksize */
+
+		va_start(args);
+		vsprintf(buf, fmt, args);
+		write(fd, buf, strlen(buf));
+		va_end(args);
+	}
+
+In samterm/flayer.h, replace the declaration of the member named
+textfn (near line 20) in structure Flayer, currently declared as:
+
+ 	Rune		*(*textfn)(Flayer*, long, ulong*);
+
+with
+	Rune		*(*textfn)(Flayer*, long, unsigned long*);
+
+In sam/parse.h, replace the declaration of the member named fn
+(near line 46) in structure cmdtab, currently declared as:
+
+ 	int	(*fn)(File*, Cmd*);	/* function to call with parse tree */
+with
+	int	(*fn)(File*, struct Cmd*);	/* function to call with parse tree */
+
+In sam/sam.h, replace the declaration of function dprint (near line 245) with:
+
+	void	dprint();
+
+In include/libc.h, replace the declaration of function fprint (near line 53) with:
+
+	void	fprint();
+
+Near line 71 of samterm/samterm.h, change the declaration of function gettext from:
+
+	Rune	*gettext(Flayer*, long, ulong*);
+to
+	Rune	*gettext(Flayer*, long, unsigned long*);
+
+The shell script mips.ed attempts to automatically apply these patches when
+run from the top directory.
+
+-----------------------------------------------------------------------------------
+
+			Convex ConvexOS 9.1
+
+In libXg/latin1.c, the Convex compiler requires room for a NULL at the end
+of the 2-byte character field in struct latin.  This can be fixed by
+changing the dimension of the character array named 'c' near line 6 to
+3 from 2.  This bug appears to be fixed in the compiler for Release 10.1.
+
+-----------------------------------------------------------------------------------
+
+			Sequent PTX V2.0.3
+
+The calls to _exits() in sam/io.c near lines 184 and 205 clash with the
+prototype for a system function of the same name.  Replace the statements
+
+	_exits("damn");
+with
+	_exits('d');
+
+-----------------------------------------------------------------------------------
+
+			IBM AIX V3.2.3
+
+AIX xlc V1.2.1 generates bad code in the second call to border()
+in samterm/flayer.c:flborder() causing a core dump. Fix is to
+upgrade to later version of xlc (V1.2.1.4). Or, compile
+samterm/flayer.c (at least) with '-O'.

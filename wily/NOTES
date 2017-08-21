@@ -1,0 +1,59 @@
+Coding conventions
+
+Everything before the first blank line in each file
+is a comment about that whole file.
+
+Functions manipulating a Fish structure are called
+fish_functionName()
+
+TEXT.C
+
+buffer gap implementation:
+
+The buffer is represented as a contiguous array of Runes,
+with a "gap".  To insert or delete text, we move the gap
+to the required position, then add text into the gap or expand
+the gap.
+
+Anywhere else which needs to access the buffer has to get
+to it through text_copy or text_replace.
+
+SEARCH.C
+
+handles literal search, double-click and other expansion,
+line counting, ...
+
+For efficiency, grabs text from the buffer into a buffer and
+works from the buffer.
+
+SAM.C
+
+wrapper to support regexp.c from the program sam.
+
+Uses the buffering code in search.c.
+The buffering is optimised to go in one direction
+or the other, and regexp.c uses the internal structure of that
+buffer :-(
+
+VIEW.C
+
+Glue to connect frames, which actually display stuff, and
+text buffers.  Must cope with the fact that sometimes views
+have zero height (if they're squeezed out by the other views),
+and sometimes views change size (by adding text to a tag).
+
+If a view has been squeezed, then it has zero height, its frame
+has been frclear'ed, and you should not attempt to update the
+frame.
+
+NAMES
+
+A file name may be:
+	1. a short file name, for typing or for window labels
+	2. a unique identifier for a file
+	3. a name which the file system understands
+
+We should distinguish between these usages and meanings.
+
+A file name is possibly not the best thing for 2.
+

@@ -1,0 +1,291 @@
+\documentclass[twocolumn]{article}
+\usepackage{times,a4wide,epsfig}
+\title{The Wily User Interface (Acme for Unix)}
+\author{Gary Capell\\
+Basser Department of Computer Science,\\
+University of Sydney, 2006\\
+Australia\\
+gary@cs.su.oz.au}
+%\keywords{text editor, window manager, user interface}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The Wile E. Interface (wily) provides much of the feel of
+Acme [Pike95] in the Unix/X environment.
+This paper gives a brief overview of wily's interface, explains
+the implementation, and includes a brief note on window management.
+
+\end{abstract}
+\section{History}
+
+Wily is a reimplementation of Acme \cite{acme}
+for the Unix/X environment. Acme itself was
+heavily inspired by the Oberon \cite{oberon} user
+interface. A port was not possible because the
+Acme implentation relies on Alef \cite{alef}(a
+concurrent programming language not widely
+available) and non-portable features of Plan 9
+\cite{9BLabs}.
+
+The name "wily" derives from Wile E. Coyote, an avid user of
+Acme products.
+
+\section{The Interface}
+This is a sketch of the interface, for details
+refer to \cite{acme} or \cite{wilyu}.
+
+	\subsection{Why Wily?}
+
+Wily attempts to take maximum advantage of a
+bitmapped display and three-button mouse, and to
+require a minimum of effort from its users to
+achieve common tasks. Common editing operations
+that with other editors require incantations of
+control keys or selecting from lists of menu
+items can be done with with very little effort
+using the mouse. There have been no user studies,
+but subjectively, wily seems to substantially
+streamline the editing and debugging process.
+
+The interface integrates some of the functions of editor,
+window manager, file browser and shell, as well as providing
+an interface for external programs such as mail and news
+readers and debuggers.
+
+The interface is not obvious or familiar, but is composed of
+a few principles consistently applied, and does not take long to
+learn.  Once learnt, the interface is sufficiently addictive that
+the author re-implemented Acme to work under Unix, rather
+than coping with other editors.
+
+	\subsection{Appearance}
+\begin{figure}
+\epsfig{file=pane2.ps,width=8cm}
+\caption{Wily windows}{}
+\end{figure}
+
+Wily appears as one or more vertical columns,
+divided into windows of scrolling text. Each column or window is
+headed by a thin horizontal tag which includes the
+name of the file or directory the window represents, some
+commands, and a marker indicating if the file contains
+changes not yet written to disk.  The text in a window may represent
+a directory, a file, an interface to some external program such as
+a news reader, or the output from some command.
+
+	\subsection{Mouse Actions}
+\emph{Any} text on the screen can be selected by dragging
+with a mouse button.  The actions of the different buttons are:
+\begin{description}
+\item[Button 1] highlights the text for later actions
+\item[Button 2] executes the text as a command, e.g. selecting
+	the word 'make' will run the make command as if it were typed
+	to the shell.  There is a small set of built-in functions that
+	are searched for first.
+\item[Button 3] attempts to \emph{open} the selected text.
+	What this means depends on the text selected. 
+	If the text is the name of a file or a search pattern for
+	a part of some file, the file is opened if necessary, and
+	the pattern is searched for.  Otherwise, the text is treated
+	as a string to be searched for in the current window.
+\end{description}
+
+Panes and columns can be moved and reshaped by clicking
+or dragging in the \emph{buttons} to the left of their tags.
+
+There are no menus, and five special keys
+(page up, page down, kill word, kill line, select
+recently typed text).  All functions
+are accessed through mouse actions on text.
+
+	\subsection{Context}
+
+Commands and file names are interpreted with respect to
+the directory of the window
+in which they originate, so for example selecting \texttt{foo.h}
+with button 3 in file \texttt{/src/wily/bar.c} will open the file
+\texttt{/src/wily/foo.h}.  Similarly selecting
+\texttt{make} in the tag of \texttt{/src/wily/bar.c}
+will run \texttt{make} in \texttt{/src/wily/},
+with any output
+sent to a window labelled \texttt{/src/wily/+Errors} (which
+will be created if necessary).
+
+	\subsection{Short Cuts}
+
+
+Double-clicking with button 1 selects either a word, a line or a
+piece of text delimited by parentheses, quotes or brackets.
+If buttons 2 or 3 make a selection of
+zero length (i.e. a click) the selection is expanded to a whole word or
+a file name with optional address (respectively).
+
+Mouse \emph{chords} are used for cutting and pasting.  To move
+some text from one place to another, it first is selected by dragging with button 1.
+While holding button 1 down, if button 2 is pressed, the text is \emph{cut}.
+The text can later be pasted into place by holding button 1 and then clicking
+button 3.  This action is easier done than said, and is much quicker than searching
+for a menu entry.
+
+A mouse chord is also used as a short-hand for the idiom of executing a command
+with some argument.  While clicking with button 2 in the command, if button 1 
+is then pressed,  the text most recently selected with button 1 is given
+as an argument to the command.  For example, one could click with button 1
+in a program variable, chord buttons 2 and 1 on the name of a script to grep
+through source files, and get a list of all occurrences of that variable.
+Clicking with button 3 on any of the occurrences on that list will open the relevant
+file at the correct line.
+
+The mouse cursor is often warped to where the program predicts the next
+action is likely to take place.  For example, after opening a file at a particular
+address, the cursor is warped to that position of that file.
+
+The escape key selects any text typed since the last cursor movement, making
+it easier to select with the mouse.
+
+	\subsection{Miscellanea}
+
+Wily by default displays text proportionally spaced, which is much more pleasant
+to read than constant width text.  A builtin function lets the font be
+switched temporarily to constant
+width when necessary.
+
+Wily provides a full Undo/Redo history for each window.
+
+Newly created windows are placed by the program, not the user.
+While it is possible for the user to reposition or resize the window after
+it is created, window-positioning heuristics generally make
+such positioning unnecessary.
+
+	\subsection{A Short Example}
+
+Gary has been using wily to develop a program called wily.
+
+He clicks button 2 in the word \texttt{make} which he's left in the
+tag of the window for his source directory.  A new window
+pops up labelled \texttt{/src/wily/+Errors}, containing
+amongst other things the line \texttt{builtins.c:78: parse error before `)'}.
+He clicks button 3 anywhere in \texttt{builtins.c:78:}.  A new window
+labelled \texttt{/src/wily/builtins.c} appears, with line 78 highlighted,
+and the cursor warps to this line.
+Gary sees that the last \texttt{)} on that line is unnecessary.  He
+selects it with button 1, and while holding button 1 down, clicks button
+2 to cut out the offending parenthesis.  The button of the window
+changes, to indicate that the window represents a file which is "dirty".
+Gary clicks button 2 in the word "Put" in the window's tag, to write
+the file to disk.  He selects \texttt{make} in the tag of the window
+of the directory, and the cycle begins again.
+
+This whole interaction required six mouse clicks and much less
+time than the time to read about it.
+
+\section{The Implementation}
+
+Wily is a single-threaded event-driven server process.  The events it
+waits for are keyboard and mouse actions, and output arriving
+on pipes shared with child processes.  Text display is handled
+by text widgets.
+
+	\subsection{Child Processes}
+
+To execute a command that isn't built in, the wily server forks a child, modifies
+the child's execution environment, and the child \texttt{exec}s the required command.
+
+The current directory is set to that which
+the command was invoked from.   The child's file descriptors are set so that
+\texttt{stdin} is redirected from \texttt{/dev/null},
+\texttt{stdout} and \texttt{stderr} are redirected to a file
+descriptor the server listens to for output, and file descriptor 3 is a socket open
+to pass messages between the server and child.
+
+The child also inherits some environment variables which are helpful for writing
+scripts: \texttt{WILYLABEL} is the context the command was invoked from,
+and \texttt{WILYARGLABEL} is the context of the argument to the command,
+if any.
+
+The parent adds the file descriptors passed to the child to a list of
+file descriptors that it monitors for output, and remembers which directory
+that stream is associated with, so that output will appear in an appropriate window.
+
+More sophisticated client processes can communicate
+with the server through a message
+protocol.  The message protocol is still being designed, but basically
+when the user interacts with a wily window, wily sends messages to
+the client program to let it know what the user has done.  For example
+a news reading client might display an overview of a news group, and
+wait for a message from wily to indicate that the user has clicked
+with button 3 to indicate that they want to "open" a particular news item.
+
+Wrappers for the shell and Python\cite{python}
+have been written to make writing programs
+using wily as their interface even easier.  For example, here is a simple mail interface
+written in \texttt{rc}:
+\begin{verbatim}
+#!/bin/rc
+id= `{wnew}	# create a new window
+wcmd $id Label $home/Mail/inbox
+wcmd $id Tag inc scan rmm repl
+wout $id scan		# display scan's output
+\end{verbatim}
+ 
+On the author's system,
+Wily's binary (not including X shared libraries) is one-fourteenth the size
+of Xemacs'.  The source code for wily (not including libtext, libframe, libXg) takes
+3045 lines (measured by \texttt{wc -l *.[ch]}).
+
+\section{Window Management}
+
+One of the reasons wily was written was to experiment with alternatives for window
+management.  Acme's tiling windows are occasionally quite annoying.  An earlier implementation
+of wily used one window (and one process) per pane, which communicated using two
+X cut buffers and named pipes.  Window management was then passed on to
+the X window manager.  This had the benefits of providing
+overlapping windows, multiple work spaces (using the virtual root window), and the
+option of iconifying windows.
+
+Unfortunately, this arrangement turned out to be much more annoying than
+the tiling window management of Acme, when used with the large numbers of
+windows that come into play when, for example, developing software using wily.
+Sadder but wiser, a tiling window manager was added to wily.
+\section{Strengths, Weaknesses and Further Work}
+
+The things the author misses most when using another editor are:
+mouse chording for cut and paste (alternatives seem very awkward),
+opening a file to a particular line with a single mouse click, and editing
+in a proportional font.
+
+Some of wily's strengths may also be seen as weaknesses:  heavy exploitation
+of bitmapped terminal and three button mouse mean wily is unusable on glass
+and paper ttys.  The terse mouse command language is opaque and even intimidating
+for new users.  Occasionally it seems that arrow keys would be helpful.
+
+Wily doesn't yet provide all the features of Acme.  Notably missing
+are sophisticated window arrangement and regular expression searching.
+
+These features are towards the top of the wily To Do list, along with
+minimizing portability problems, simplifying the code, and firming up the messaging
+interface. 
+
+Built-in functions may soon be provided to allow selected text to
+be piped through, to be replaced by the output of, or to be used as the input for
+some executed command.
+
+The display of text may also be experimented with.  One possibility is
+to provide an \emph{outline} mode where subtrees of a hierarchy may be
+hidden.
+\section{Availability}
+
+
+Wily is available for anonymous FTP from \texttt{ftp.cs.su.oz.au} in directory
+\texttt{gary/wily}.  The author welcomes comments, suggestions and
+fixes to portability problems.
+\section{Acknowledgements}
+
+Many suggestions on wily and this paper, and much of the code  were received
+from Bill Trost \texttt{trost@cloud.rain.com}.  Libraries
+used include libXg and libframe, part of the Sam distribution by Rob Pike and
+Howard Trickey, and libtext by James Farrow.
+\bibliography{wily}
+\bibliographystyle{plain}
+\end{document}

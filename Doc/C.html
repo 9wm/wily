@@ -1,0 +1,342 @@
+<HTML><HEAD><TITLE>Wily C Programmers Manual</TITLE></HEAD>
+<BODY><H1><A HREF="index.html">Wily</A> C Programmers Manual</H1>
+
+<!-- documentation for ../include/msg.h ../wily/msg.c -->
+<H2>Introduction</H2>
+
+<P>Although a lot can be done with simple scripts and Wily,
+some applications will need finer control.  Wily can act as a
+"user interface server".  Clients can create and manipulate 
+windows, and/or monitor events which happen in windows,
+by sending and receiving messages.
+
+<P>There are two "levels" to the interface:  an "RPC" level,
+where the library looks after low-level details of queueing, packing
+and unpacking messages, and a lower-level interface dealing more
+directly with message packets.
+
+<P><B>Warning</B> this API hasn't been used very much.
+There could well be bugs lurking in unused sections of code,
+and the API could well change.
+
+<H2>Establishing a Connection</H2>
+
+<P>Call <TT>client_connect()</TT>, which returns a file descriptor
+open for reading and writing to Wily, or a negative number if
+there's been some error.  <TT>client_connect()</TT> uses <TT>$WILYFIFO</TT>
+if it is set.
+
+<H2>RPC-style Interface</H2>
+<H3>Opening, Closing and Checking the RPC interface</H3>
+
+<DL>
+<H4>Handle* rpc_init (int fd);</H4>
+Create a new RPC handle to use file descriptor <TT>fd</TT>, which
+was probably returned from <TT>client_connect</TT>
+
+<P><TT>rpc_init</TT> cannot fail.
+
+<H4>Bool rpc_isconnected(Handle*h);</H4>
+Return whether or not <TT>h</TT> is still connected.  If the RPC
+library starts receiving gibberish messages, it will cut the
+connection.
+
+<H4>void rpc_freehandle(Handle*h);</H4>
+Release any resources used by <TT>h</TT>, and free <TT>h</TT>
+itself.
+
+<H3>Requests</H3>
+
+<P>If there's any sort of failure, all of these functions return a
+pointer to an error message, which is stored in a static buffer and
+only guaranteed to remain valid until the next <TT>rpc_*</TT>
+function is called.  After a failure, it's possible that the connection
+to wily has been lost.  This should be checked using
+<TT>rpc_isconnected</TT>
+
+<P>If successful, these functions return <TT>(char*)0</TT>.
+
+
+<H4><I>List existing windows</I>
+<BR>char* rpc_list  (Handle*, char **bufptr);</H4>
+If successful, allocates a string, 
+and stores a pointer to it in <TT>bufptr</TT>.  It is the programmer's
+responsibility to <TT>free(*bufptr)</TT>.
+The string contains one line for each window currently open in Wily.
+Each line contains the name of the window, some whitespace, and a
+unique number which identifies the window.  The window identifiers
+are not reused within an invocation of Wily.
+
+<P>Below is some example output from <TT>rpc_list</TT>:
+<PRE>
+/n/staff/u13/pgrad/gary/src/wily/Doc/C.html	45
+/n/staff/u13/pgrad/gary/src/wily/Doc/index.html	41
+/n/staff/u13/pgrad/gary/src/wily/Doc/	40
+/n/staff/u13/pgrad/gary/guide	0
+</PRE>
+
+<H4><I>Open or create a window</I>
+<BR>char*    rpc_new         (Handle*, char *s, Id*id, ushort backup);</H4>
+Create or open window with name <TT>s</TT>.  If
+Wily already has a window named 's', it uses that window,
+otherwise it creates a new window.
+
+<P>The identifier for the opened/created window will be stored in 
+<TT>id</TT>.
+
+<P>If this request creates (not just opens) the window, 
+Wily will make sure backups are kept for the window (and indicate
+when the window is dirty) if and only if <TT>backup</TT> is set.
+
+<H4><I>Request events from a window</I>
+<BR>char*    rpc_attach      (Handle*, Id w, ushort mask);</H4>
+Asks Wily to send us events which happen in window <TT>w</TT>
+and match event bitmask <TT>mask</TT>.
+
+<P>Each window can be sending events to at most one remote process.
+The window sends only events which match its event bitmask.
+An event bitmask is formed  by ORing some combination of (<TT>WEexec, WEgoto, WEdestroy, WEreplace</TT>) (explained further below).
+
+<P><TT>rpc_attach</TT> will
+fail if <TT>w</TT> doesn't exist, or is already sending its
+events somewhere else.
+
+<P>To stop receiving events from a window,
+use an <TT>rpc_attach</TT> with a <TT>mask</TT> of 0.
+
+<H4><I>Change a window's name</I>
+<BR>char*    rpc_setname     (Handle*, Id w, char *s);</H4>
+Set the name of window <TT>w</TT> to <TT>s</TT>.
+
+<H4><I>Change a window's "tools"</I>
+<BR>char*    rpc_settools    (Handle*, Id w, char *s);</H4>
+Set the tools section of <TT>w</TT> to <TT>s</TT>
+
+<H4><I>Read data from a window</I>
+<BR>char*    rpc_read                (Handle*, Id w, Range r, char*buf);</H4>
+Read range <TT>r</TT> from <TT>w</TT> into <TT>buf</TT>,
+which must have enough space (<TT>UTFmax * RLEN(r)</TT>).
+
+<P>The range <TT>r</TT> means the Rune offsets in <TT>w</TT>
+<TT>&gt;= r.p0</TT> and <TT>&lt; r.p1</TT>.  Don't forget
+that each Rune will be potentially encoded in <TT>UTFmax</TT>
+bytes.
+
+<P><TT>rpc_read</TT> fails if
+<TT>r</TT> is not fully contained in window <TT>w</TT>.
+<TT>rpc_goto</TT> may be useful to obtain legal ranges.
+
+<H4><I>Insert, delete or replace text</I>
+<BR>char*    rpc_replace     (Handle*, Id w, Range r, char*s);</H4>
+Replace range <TT>r</TT> in <TT>w</TT> with UTF string <TT>s</TT>
+
+<P>Note that insertion and deletion are special
+cases of replacement.
+
+<H4><I>Ask Wily to execute a command</I>
+<BR>char*    rpc_exec                (Handle*, Id w , char *s);</H4>
+Cause Wily to act as though <TT>s</TT> were selected in
+<TT>w</TT> with button 2.
+
+<P>Note that builtin functions (e.g. <B>Del</B>) can
+also be executed with <TT>rpc_exec</TT>.
+
+<H4><I>Ask Wily to "goto" a file or location</I>
+<BR>char*    rpc_goto                (Handle*, Id *w , Range* r, char*s, ushort flag);</H4>
+Cause Wily to act as though <TT>s</TT> were selected in
+<TT>w</TT> with button 3.
+
+<P>If this makes Wily do a search within '*w', the start position
+for the search is usually taken from '<TT>*r</TT>'.
+The search can instead start from the current selection of the
+file if <TT>r-&gt;p0 &gt; r-&gt;p1</TT>.  If there are multiple
+views of the same file, one is chosen arbitrarily.
+
+<P>If the search is successful, '<TT>*w</TT>' and '<TT>*r</TT>' are set to the window
+and range found by the search.  The range found will be selected
+and highlighted if and only if '<TT>flag</TT>' is set.
+
+<P><B>Hint</B>: <TT>rpc_goto</TT> can be used to find useful
+ranges for <TT>rpc_read</TT> and <TT>rpc_replace</TT>.  Don't forget that the search string
+can be any address that Wily understands, e.g. <TT>:4</TT>  or   <TT>:,</TT>  or <TT> :.,</TT>
+
+<H3>Events</H3>
+<H4>int              rpc_event       (Handle*h, Msg *m);</H4>
+Block until an event is received by <TT>h</TT> and fill
+in <TT>m</TT>.  Returns 0 for success, -1 for failure.
+After a successful call to <TT>rpc_event</TT>,
+you will need to <TT>free(m->s)</TT>.
+
+<H4>char *rpc_bounce(Handle *h, Msg *m)</H4>
+Returns <TT>m</TT> to Wily.
+Useful for events which we receive but we'd rather Wily
+took the default action on.
+
+<H4>Bool             rpc_event_iswaiting(Handle*h);</H4>
+Returns <TT>true</TT> if <TT>rpc_event</TT> could be called
+without needing to block.  Only useful if your program
+is reading from other input sources as well. (e.g. see <TT>win.c</TT>)
+
+<H2>Message-Passing Interface</H2>
+
+<PRE>
+struct Msg {
+        Mtype   t;	/* message type */
+        Id      m;      /* message */
+        Id      w;      /* window */    
+        Range   r;
+        uchar   flag;
+        char    *s;
+};
+</PRE>
+
+<P>All the fields except the message
+type are optional.  The string <TT>s</TT> is always null-terminated,
+is in UTF format, must be a complete UTF sequence, 
+and is of zero length if not being used.
+
+<P>These are the message types declared in <TT>msg.h</TT>, with brief
+descriptions, and important parameters:
+
+<H3>Request/Reply/Error</H3>
+
+<H4>WRerror(<TT>s</TT>) </H4>
+Message type returned by wily if there's an error with
+some request.  <TT>s</TT> contains an error message.  On the other
+hand, if the request completes successfully wily returns a message with
+message type one greater than the message type of the request.
+
+<H4>WMlist</H4>
+Asks wily to send a list of windows currently displayed.
+
+<H4>WRlist(<TT>s</TT>)</H4>
+Wily's reply to WMlist.  Includes a string containing
+one line per active window.  Each line contains a name and an id (as a
+textual number) separated by whitespace.
+
+<H4>WMnew(<TT>s,flag</TT>)</H4>
+Asks wily to create a window with
+a given label (which may be an existing file).
+If and only if <TT>flag</TT> is set, backups will be
+kept for the new window.
+
+<H4>WRnew(<TT>w</TT>)</H4>
+The id of the newly created window.
+
+<H4>WMattach(<TT>w,flag</TT>)</H4>
+Asks wily to send to the client
+events associated with this window, and matching
+the event mask set in <TT>flag</TT>
+
+<H4>WRattach()</H4>
+
+<H4>WMdetach(<TT>w</TT>)</H4>
+Asks wily to stop sending to the client
+events associated with this window.
+
+<H4>WRdetach()</H4>
+
+<H4>WMsetname(<TT>w,s</TT>)</H4>
+Change the name of this window.
+
+<H4>WRsetname()</H4>
+
+<H4>WMsettools(<TT>w,s</TT>)</H4>
+Change the tools for this window.
+Tools are simply words appearing in the
+tag of a window, after the window name and
+before the 'pipe' symbol.  They are (will be)
+automatically maintained, i.e. they will be replaced
+if accidentally deleted.
+
+<H4>WRsettools()</H4><P>
+
+<H4>WMread(<TT>w,r</TT>)</H4>
+Read the text from <TT>w</TT> in range <TT>r</TT>.
+
+<H4>WRread(<TT>s</TT>)</H4>
+The requested text, as a UTF string.
+
+<H4>WMreplace(<TT>w,r,s</TT>)</H4>
+Replace the text from <TT>w</TT> in range <TT>r</TT> with UTF string
+<TT>s</TT>
+
+<H4>WRreplace()</H4><P>
+
+<H4>WMexec(<TT>w,s</TT>)</H4>
+Act as if <TT>s</TT> had been clicked with b2
+in <TT>w</TT>
+
+<H4>WRexec()</H4>
+
+<H4>WMgoto(<TT>w,r,flag,s</TT>)</H4>
+Act as if <TT>s</TT> had been clicked with B3 in <TT>w</TT> at
+<TT>r</TT>.  If <TT>flag</TT> is set then "dot" is set by wily,
+otherwise we return the window and range that would have been jumped
+to, but don't actually change "dot".
+
+<H4>WRgoto(<TT>w,r</TT>)</H4>
+ The window and range we went to.
+
+<H4>WMfencepost()</H4>
+Not used for any message.  Messages with Mtype less than
+<TT>WMfencepost</TT> are to do with our requests.  Messages with Mtype
+greater than  <TT>WMfencepost</TT> are <EM>events</EM>.
+
+
+<H3>Events</H3>
+
+
+<P>These are the messages sent by Wily to clients who request
+to be notified of events in a particular window using <TT>WMattach</TT>
+
+<P>The event types are used to form a mask to be given as a
+parameter to the <TT>WMattach</TT> request.  For example, to
+request only exec and goto events, set 
+<TT>m.f = WEexec|WEgoto</TT> before sending message <TT>m</TT>
+<P>
+<H4>WEexec(<TT>w,s</TT>)</H4>
+<TT>s</TT> was selected with the middle (execute)
+button somewhere in <TT>w</TT>
+
+<H4>WEgoto(<TT>w,r,s</TT>)</H4>
+ <TT>s</TT> was selected with the right (goto)
+button at <TT>r</TT> in <TT>w</TT>
+
+<H4>WEdestroy(<TT>w</TT>) </H4>
+<TT>w</TT> has been destroyed.
+
+<H4>WEreplace(<TT>w,r,s</TT>) </H4>
+The text at <TT>r</TT> in <TT>w</TT> was
+replaced by <TT>s</TT>.
+
+
+
+<H3>Packing and Unpacking Messages</H3>
+
+<H4>int  msg_size (Msg *m);</H4>
+Returns the size of buffer that will be needed to "flatten"
+<TT>m</TT>
+
+<H4>void msg_flatten (Msg*m, char*buf);</H4>
+"Flatten" <TT>m</TT> into <TT>buf</TT>, which must have enough storage
+space allocated.
+
+<H4>ulong    msg_bufsize     (char*buf);</H4>
+Returns the total size of the flattened message starting at
+<TT>buf</TT>.  Assumes that at least <TT>HSIZE</TT> bytes are stored in
+<TT>buf</TT>.  A useful macro is <TT>#define FULLMSG(ptr,n) ( (n) >=
+HSIZE &amp;&amp; (n) >= msg_bufsize(ptr) )</TT>
+
+<H4>int              msg_init                (Msg*m, char*buf);</H4>
+The reverse of <TT>msg_flatten</TT>.  Fills in the fields of 'm' using
+the flat representation starting at <TT>buf</TT> <TT>Msg_init</TT>
+assumes that <TT>buf</TT> holds the complete message.  <TT>m->s</TT>
+will point to an area within <TT>buf</TT>, but <TT>buf</TT> itself is
+not modified.
+
+<H4>void             msg_print       (Msg *m);</H4>
+Print a human-readable form of <TT>m</TT> to <TT>stderr</TT>
+
+</BODY>
+</HTML>

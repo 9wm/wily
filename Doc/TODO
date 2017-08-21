@@ -1,0 +1,41 @@
+grep -win bug ../wily/*.[ch]			# important things still to be done
+grep -win todo ../wily/*.[ch]			# things still to be done
+************ BUGS ********************
+* check every use of sprintf, strcpy, ... to make sure we can't exceed static buffers.
+* drag tag to bottom of column -> core dump
+
+************ DOCO ***************
+list of pointers to unicode software
+make it easy to install/use fonts
+add "what about a win 3.1/95/NT port" FAQ entry
+
+************ PORTABILITY BUGS ***************
+
+************ IMPORTANT FEATURES ***************
+Use empty space when placing new windows (bill)
+tab argument use -tab instead of -a
+
+************ FEATURES ***************
+persistence (Load/Store)
+Check file mod. time, stop you from overwriting changed file
+full Sam regexps
+full Sam commands
+argument to Font
+wilyproxy
+empty columns should still have a vertical line
+tag should indicate if it isn't displaying everything
+give tags different background colour
+international characters entry
+	use X11R6 "input extensions"? (schwartz)
+	extra process monitors (and modifies) inputted text (Steve_Kilbane)
+newline in tag on _directory_ could mean 'open that directory'
+scrolling tag -- always show RIGHTmost stuff
+experiment with DontList _regexp_ to restrict directory listings dir.c:#1227 (Elliott Hughes)
+-title option
+check out joe: claims:
+	Joe uses the Boyer-Moore algorithm adapted for segmented blocks.  This more
+	than overcomes the simplicity you would get by having only a single gap.
+
+************ EXPERIMENT ***************
+running autosave?
+"Get" builtin, like Look but for addresses, perhaps called ':'

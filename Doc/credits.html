@@ -1,0 +1,92 @@
+<HTML><HEAD><TITLE>People and history behind Wily</TITLE></HEAD>
+<BODY><H1>People and history behind <A HREF="index.html">Wily</A></H1>
+
+<H2>Wilyfans</H2>
+Mail <A HREF="mailto:wilyfans@jli.com">wilyfans@jli.com</A> with comments
+and queries about Wily.  The wilyfans list is the place for discussing and announcing
+changes to Wily.
+
+<P>Mail <A HREF="mailto:wilyfans-request@jli.com">wilyfans-request@jli.com</A>
+to (un)subscribe.
+
+<P>The list is archived at <A HREF="http://wwwtios.cs.utwente.nl/archive/wilyfans/threads.html">http://wwwtios.cs.utwente.nl/archive/wilyfans/threads.html</A>
+
+<H2>People</H2>
+<P>Regrettably, this list is <B>very</B> incomplete and out-of-date.
+
+<DL>
+<DT>N. Wirth, J. Gutknecht
+<DD>	Oberon
+<DT>Rob Pike &lt;rob@plan9.bell-labs.com&gt;
+<DD>	Acme
+<DT>Gary Capell &lt;gary@cs.su.oz.au&gt;
+<DD>	Wily first draft, current maintainer
+<DT>Bill Trost &lt;trost@cloud.rain.com&gt;
+<DD>	too many patches, bugfixes, ideas to list
+	<BR>fixed listen() race condition
+	<BR>stripnulls bug
+	<BR>expanded address stuff
+	<BR>better env.c
+	<BR>reduce excessive redraws
+	<BR>fix for next_width bug
+	<BR>much of the messaging design
+	<BR>"undo" bugfix
+	<BR>Dot builtin
+	<BR>tag_findtool
+<DT>Steve Kilbane
+<DD>	integrated sam's regexp
+<DT>Richard Wolff
+<DD>	sunos4 patches,
+	<BR>msg.c bugfix
+	<BR>use salloc, srealloc in sam regexp stuff
+<DT>Arnold Robbins
+<DD>	cleanup wilyfifo
+	<BR>ignore SIGPIPE
+<DT>Assar &lt;assar@pdc.kth.se&gt;
+<DD>	autoconfig stuff
+<DT>Scott Schwartz
+<DD>	prevent $TMPDIR replacing /tmp in tag
+	<BR>fix to wily/sam.c:/^error_c
+	<BR>path.c - nextstr pathfind searchincludedirs
+<DT>Mark H. Wilkinson &lt;mhw@minster.york.ac.uk&gt;
+<DD>	fix ESC bug
+	<BR>use $WILYBAK as the backup directory
+	<BR>bug in delpane
+	<BR>snarf/paste use X clipboard
+	<BR>memory overrun in libmsg/util.c:/^stripnulls
+	<BR>pstrapp
+
+<DT>Bjorn Helgaas &lt;helgaas@convex.hp.com&gt;
+<DD>	fix bug when scrolling one-line window
+	<BR>bug in event.c
+	<BR>Font builtin
+	<BR>better scrolling
+	<BR>Local builtin
+	<BR>nicer scroll_init
+	<BR>FILENAME_MAX -&gt; MAXPATHLEN in libmsg/connect.c
+
+<DT>Kyle &lt;kaschei@staff.cs.su.oz.au&gt;
+<DD>	wily.xpm
+	<BR>bug: in win.c
+<DT>Davor Cubranic &lt;cubranic@hermes.si&gt;
+<DD>	bugs: New window has no cursor, Look in empty window dumps core
+
+<DT>Rich Salz,
+<DD><DT>Beirne Konarski,
+<DD><DT>Scott Schwartz
+<DD><DT>Daniel Neri &lt;d92-dne@nada.kth.se&gt;
+<DD>	"Split" bug-report
+<DT>Stephen Gallimore &lt;stephen@psyc.leeds.ac.uk&gt;
+<DD>	pathfind patch
+</DL>
+
+<H2>History</H2>
+<H3>Oberon</H3>
+<H3>Help</H3>
+<H3>Acme</H3>
+<H3>Wily</H3>
+
+<H2>Differences between Wily and Acme</H2>
+Are detailed in <A HREF="AcmeVsWily.html">another file</A>
+</BODY>
+</HTML>

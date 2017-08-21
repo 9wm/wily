@@ -1,0 +1,5 @@
+#!/bin/rc
+# script to make errors from the C compiler look like addresses
+# to Wily.
+
+exec /usr/ccs/bin/make $*  >[2=1] | perl -pe '$| = 1; s/"([^"]*)", line ([0-9]+)/\1:\2/;'

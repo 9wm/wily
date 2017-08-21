@@ -1,0 +1,67 @@
+Announcing the second beta release of Wily. (0.13.23)
+
+What is Wily?
+
+Wily edits and displays text and directories, and runs
+commands.  It requires UNIX, X and a three-button mouse.
+It is intended to eventually be an integrated working
+environment for all tasks involving text.  It uses the mouse
+heavily.  It emphasises speed for experienced users, but is
+probably simple to learn as it has very few concepts.
+
+There are simple mouse-based editors for beginners, and
+fast, powerful keyboard-based editors for experts.  Wily is
+a simple, fast, powerful mouse-based editor for experts. ;-)
+
+It is based heavily on the Acme environment from Plan
+9, which in turn was strongly influenced by the Oberon
+environment.
+
+What's different about it?
+
+Wily is quite different from most other editors in a number
+of areas.  Nearly all operations are through mouse actions
+on text on the screen: there are no menus, and almost no
+"key bindings" or "function keys".  Full support for Unicode
+and proportionally-spaced text is provided.  A bitmapped
+terminal and three-button mouse are assumed, and "chords"
+(combinations of mouse buttons) are used extensively.
+Minimising the number of keystrokes and mouse actions needed
+while working with wily was a design aim.  Wily itself is
+almost totally UNconfigurable, but it is quite simple to
+connect wily to other programs, written in _any_ language,
+both for simple text-manipulation tasks, and to use wily as
+a front-end for other programs such as mail or news readers,
+or terminals.  It is possible (and intended) to "live"
+in wily as with other, more complicated editors.  Wily
+itself is pretty simple, and small (148k for the stripped
+dynamically linked binary on the author's machine, c.f. 236k
+for vi, 2044k for xemacs).
+
+What state is it in?
+
+Development continues, but it is probably ready for most
+people to use.  About fifty people have been using it
+continuously for more than a year.
+
+More information?
+
+Can be found at http://www.cs.usyd.edu.au/~gary/wily/
+http://plan9.att.com/plan9/doc/acme.html describes the Plan
+9 program that wily was modelled after.
+
+Where do you get it?
+ftp://ftp.cs.su.oz.au/gary/wily/
+ftp://ftp.math.tau.ac.il/pub/laden/wily
+ftp://ftp.cs.york.ac.uk:/pub/mhw/wily/
+ftp://ftp.northsea.com:/pub/plan9_unix/wily/
+
+Will it work on my system?
+
+I hope so.  There's a 'configure' script which should work.
+It has worked on SunOS, Solaris, Linux, AIX, HPUX, OSF,
+Ultrix, BSDI, Irix.
+
+What conditions/license?
+
+The Artistic License, similar to that of Perl.

@@ -1,0 +1,176 @@
+<HTML><HEAD><TITLE>Wily Idioms</TITLE></HEAD>
+<BODY><SMALL><I><A HREF="index.html">Wily</A></I></SMALL><HR>
+<H1>Wily Idioms</H1>
+
+This is a collection of useful scripts, guide files and ways
+of working with Wily.
+
+
+<H2>Guide files</H2>
+	Collect useful script names, file names, regular expressions
+	into a simple text file, which can act as a tool box/menu.
+	e.g. 
+	my $h/lib/html/guide
+	<pre>
+	|title |h1 |h2 |h3
+	|href http://
+	|mailto gary@cs.su.oz.au
+	|i |b |tt
+	|tag blockquote
+	|indent
+	</pre>
+	and my $h/guide
+	<pre>
+	remote rm guide |par |indent |undent :., :, W sam sg wdef  9term
+	Mace/in src/jcrab
+	news; overp comp.risks
+	$wilysrc $wilybin
+	</pre>
+	I edit my $h/guide to have the names of files and directories
+	I'm frequently working with.
+	
+<H2>Start-up Script</H2>
+	Start Wily from a shell script which sets up the environment,
+	and initial files
+	<PRE>
+	#!/plan9/bin/rc
+	EDITOR=W	# makes wily the editor for mail, etc.
+	path=(. $path)	# add '.' to the path
+	exec wily  $h/guide	# use an initial 'guide file'
+	</PRE>
+<H2>Short-cut Environment Variables</H2>
+	Set environment variables to make window labels
+	shorter and easier to type, e.g.
+	<pre>
+	h = $HOME
+	wilysrc = $h/src/wily/wily
+	wilybin = $h/obj/$cputype/wily/wily
+	</pre>
+<H2>"buttons"</H2>
+	These are commands designed to operate on the window in which
+	they are clicked.
+	<OL>
+	<LI>Write a script which operates on $WILYLABEL, e.g.
+	<CODE>createreplymessage $WILYLABEL</CODE>
+	<LI>Add a <TT>.wilytools</TT> entry so the name of the
+	script appears automatically in the tags of appropriate windows,
+	e.g. 
+	<PRE>
+	Mace.*\$		subject
+	Mace	reply
+	</PRE>
+	would ensure that all the subdirectories of Mace have a "subject"
+	button, and all the normal files in the Mace file tree have a "reply"
+	button.
+	</OL>
+	
+<H2>wily tag</H2>
+	Use the wily tag (the tag above the columns) to store <B>very</B>
+	frequently used commands and addresses.  This is particularly
+	useful because the wily tag is never obscured.
+	
+	<P>I normally copy the top line of my <TT>$h/guide</TT> file
+	to the wilytag as soon as I start Wily.
+	
+<H2>B3 to change "last selection"</H2>
+	B3 in the label of a window to make its body the last selection
+	<I>without having to sweep the selection out again.</I>
+
+<H2>Plan to double-click</H2>
+	Put quotes or brackets around long commands you might want to
+	re-select later.  It's just a bit easier than sweeping the
+	command out again.
+
+<H2>double-click to check syntax</H2>
+	Double-click just inside a bracket or brace to find where
+	the other half of the matching pair is, e.g. to check if
+	you've got enough closing brackets.
+	
+<H2>double-click to select SGML elements</H2>
+	Double-clicking will select between <TT>&gt;&lt;</TT> pairs,
+	so given this text: "<TT>&lt;H1&gt;the heading&lt;/H1&gt;</TT>",
+	double-clicking just before "the" will select "the heading".
+	
+<H2>address expressions in the wily tag</H2>
+	B3-ing in a tag with no body (i.e. the wily tag or a column tag)
+	searches for the address in the last selected window.  This lets
+	you put common address searches (e.g. :, (select the whole window))
+	in the wily tag and apply them to a window by selecting the window,
+	then B3-ing in the address.
+
+<H2>use history file(s)</H2>
+	Set <TT>$history</TT> and use it as a memory for obscure
+	commands you perform infrequently, and as a short-cut for
+	for commands you've performed recently.
+	
+	<P>I set $history based on the date.  This gives me one file
+	with recent commands, and a directory full of files with older
+	commands.  I use two history-printing commands, one called 'h'
+	which searches through the current history file, the other called
+	'hg' searches through <B>all</B> my history files, using 
+	<A HREF="http://glimpse.cs.arizona.edu">glimpse</A>.
+	
+	<P>h<PRE>
+	#!/plan9/bin/rc
+	if ( % $#* 0 ) {
+		tail $history
+	} else {
+		agrep $1 $history | tail
+	}
+	</PRE>
+	
+	<P>hg
+	<PRE>
+	#!/plan9/bin/rc
+	glimpse -H $h/lib/history -h -y -L 15 $*
+	</PRE>
+
+<H2>remote interface to netscape</H2>
+I call this script 'remote'
+<pre>#!/plan9/bin/rc
+for(i) {
+	netscape -noraise -remote 'openURL('^$i^',new-window)'
+}
+</pre>
+	<P>To use it, select one or more URLs, and B2B1 on 'remote'.
+	Netscape will then open a window on each of the URLs.
+
+<H2>Look</H2>
+<UL>
+<LI>Use B2B1 on "Look" to search in one window for a symbol you have
+selected in a different window
+<LI>Use "Look" to search for a symbol you can't search for with B3 because
+its also the name of a file in "this" directory or the include path.
+</UL>
+
+<H2>Backups</H2>
+
+<P>Edit and execute the "backup warning"
+messages. 
+
+<P>A typical one might be
+<PRE>
+backup 48 /n/staff/u13/pgrad/gary/guide
+</PRE>
+
+<P>Replace the word backup with 'diff' and execute
+the line to find out what changes were discarded.
+Replace the word 'backup' with 'cp' to easily recover
+the modified version of the file.
+
+<H2>Poor man's hypertext</H2>
+You can put the name of a related file in a comment, to
+let you more easily jump between files.  E.g. I have the
+documentation  for <TT>msg.h</TT> in <TT>C.html</TT>, so
+each file has a comment referring to the other, e.g.
+in <TT>msg.h</TT>,
+<pre>/* see ../Doc/C.html for more extensive documentation */</pre>
+and in <TT>C.html</TT>
+<pre>&lt;!-- documentation for msg.h --&gt;</pre>
+
+<P>This makes it more likely that when I change one
+file I'll just B3 in the name of the related file to jump to it.
+
+<HR><A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>
+</BODY>
+</HTML>

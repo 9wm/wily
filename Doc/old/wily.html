@@ -1,0 +1,451 @@
+<HTML><HEAD> <TITLE>Wily</TITLE></HEAD><BODY>
+
+<H1>Wily</H1>
+	<IMG SRC="cartoon.gif" align=right width=352 height=249 ALT="Silly Cartoon">
+
+<BR CLEAR=left>
+<SMALL><A HREF="http://www.cs.su.oz.au/~gary/"><I> Gary Capell </I></A>
+</SMALL>
+<H3>This document</H3>
+<BR><A HREF="#appearance">Appearance, Unicode</A> - 
+<A HREF="#mouse">Mouse Actions</A> - 
+<A HREF="#example">Example</A> - 
+<A HREF="#extensions">Extensions</A> - 
+<A HREF="#implementation">Implementation</A> - 
+<A HREF="#availability">Availability</A> - 
+<A HREF="#History">History</A> - 
+
+<H3>Other documents</H3>
+<UL>
+<LI><IMG SRC="../image/new.gif" ALT="new!">
+	<A HREF="../wily2/index.html">Preview of new Wily homepage</A>
+	<BR CLEAR=left>
+<LI><A HREF="onepage.html">One Page Users Manual</A>
+<LI><A HREF="user.html">Users Manual</A>
+<LI><A HREF="pythonpaper.html">Wily + Python &gt; Emacs + Lisp?</A>
+<LI><A HREF="msg.html">Programmers Manual</A>
+<LI><A HREF="AcmeVsWily.html">Differences between Acme and Wily</A>
+</UL>
+
+<H2>Note for Sydney-ites</H2>
+I'd be keen to demonstrate/explain Wily for interested folks in Sydney
+
+<H2>Abstract:</H2>
+
+<P>Wily is an emulation for the Unix/X environment of Acme <A
+HREF="#pike95">[Pike95]</A> from Plan 9.  It combines most of the
+features of text editor, window manager, file manager
+and general user interface.
+It exploits a three-button mouse and bitmapped display 
+to provide a smooth, simple and powerful
+environment for interacting with text of all kinds.
+
+<P>Wily differs from most other editors in a number of areas.  Nearly
+all operations are through mouse actions on text on the screen: there
+are no menus, few "key bindings" and no "function keys".  Text is
+usually displayed in a proportionally-spaced font, and is interpreted as
+UTF8-encoded Unicode.  Mouse "chords" (combinations of mouse buttons)
+are used extensively.  Wily's core functionality is almost totally
+<B>un</B>configurable.  However, it is quite simple to extend Wily
+using other programs, written in <EM>any</EM> language, both for simple
+text-manipulation tasks, and to use Wily as a front-end for other
+programs such as mail or news readers, or terminals.  <P>It is possible
+(and intended) to "live" in wily as with other, more complicated
+editors.
+
+<P>The learning curve is steep, but short.  Once learnt, the interface
+is sufficiently addictive that the author re-implemented Acme to work
+under Unix, rather than coping with other editors.  Wily and Acme have a
+small but growing number of addicts.
+
+<H2><A NAME="appearance">Appearance</A></H2>
+
+<IMG SRC="example.gif" width=798 height=264>
+
+<P>Wily appears as one or more vertical columns, divided into windows
+of scrolling text. Each column or window is headed by a thin horizontal
+<I>tag</I>. The leftmost text of the tag is the name of the file or
+directory the window represents. Other text in the tag are some words
+useful as commands.
+
+<P>The small square-ish box to the left of the tag is called the
+<I>resize box</I>. If the resize box is filled, this indicates that the
+text in the associated window has been modified since it was last read
+from or written to disk.
+
+<P>The text in the <I>body</I> of the window may represent a directory,
+a file, the interface to some program like a news reader, or the output
+from some program like <CODE>make</CODE>.
+
+	<H3>Proportionally spaced, Unicode text</H3>
+
+<P>Text is displayed in a propotionally spaced font by default. There
+is a built in function to toggle with a monospace font (seen in the bottom-left
+window in the example pictured), but there are
+very few occasions when this is necessary or desirable.  In most cases
+limiting a text editor to monospace fonts is blindly following the
+hardware limitations of the 1960s.
+
+<P>Text is read and written as 
+<A HREF="http://www.stonehand.com/unicode/standard/utf8.html">UTF8-encoded</A>
+<A HREF="http://plan9.bell-labs.com/plan9/doc/utf.html">Unicode</A>,
+providing some support for editing multi-lingual and scientific text,
+but remaining backwardly compatible with plain 7-bit ASCII text.
+See <A HREF="http://www.cs.su.oz.au/~matty/9term/index.html">9term</A> for an example of another program with Unicode support,
+with some screen shots.
+
+<H2><A NAME="mouse">Basic Mouse Actions</A></H2>
+
+<EM>Any</EM> text on the screen can be selected by dragging
+with a mouse button.  Briefly, the left, middle and right mouse
+buttons are used to select, execute or goto text.  In more detail:
+<DL>
+<DT>Left button<DD>highlights the text for later actions
+<DT>Middle button<DD>executes the text as a command, e.g. selecting
+	the word '<TT>make</TT>' will run the <TT>make</TT> command as if it were typed
+	to the shell.  There is a small set of built-in functions
+	(e.g. <TT>Undo</TT>, <TT>Redo</TT>, ) that
+	are searched for first.  Wily arranges for text representing these functions
+	to be on the screen when and where appropriate, although they can always
+	be typed anywhere anytime.  Output from programs is captured and displayed
+	in windows in Wily.
+
+<DT>Right button<DD>attempts to <I>goto</I> the selected text.
+	What this means depends on the text selected, but may
+	involve opening a file or directory, or searching for a line
+	number, regular expression or literal text.
+
+	<P>Wily tries to parse the selected text as <CODE>filename:address</CODE>,
+	where <CODE>address</CODE> may be a line number or <CODE>/regexp</CODE>.
+	
+	<P>Either or both of the filename and the <CODE>:address</CODE> may be recognized.
+ 
+	<P>If Wily cannot recognise any of these forms, it searches for the
+	next occurrence of the selected text in the current window.
+</DL>
+
+<P>Panes and columns can be moved and reshaped by clicking
+or dragging in the <I>resize box</I> to the left of their tags.
+
+<P>There are no menus, and few special keys
+(page up, page down, arrow keys, Home, End, kill word, kill line, select
+recently typed text).  All functions
+are accessed through mouse actions on text.
+
+<H2><A NAME="example">A short example</A></H2>
+
+Sally has been using wily to develop a program called wily.
+
+<UL>
+
+<LI>She <I>clicks the middle mouse button</I> in the word
+<CODE>make</CODE> somewhere in the tag of the window for her source
+directory, <CODE>/src/wily/</CODE>.  Clicking the middle mouse
+button in some text tells wily to <i>execute</i> that text.  In this
+case wily runs <CODE>make</CODE> in another process.  The output
+and errors from this process will appear in a window labelled
+<CODE>/src/wily/+Errors</CODE>.  (The window will be created if
+necessary).  Unfortunately there is an error: the output includes the
+line <CODE>builtins.c:78: parse error before `)'</CODE>.
+
+<LI>She <I>clicks the right mouse button</I> anywhere in the text
+<CODE>builtins.c:78:</CODE>.  Clicking in some text with the rightmost
+mouse button tells wily to <i>goto</I> that text.  A new window labelled
+<CODE>/src/wily/builtins.c</CODE> is created if necessary, with line 78
+centred and highlighted, and the cursor warps to this line.  Sally sees
+that the last <CODE>)</CODE> on that line is unnecessary.
+
+<LI>She <I>selects it with the left mouse button</I>, and while holding
+this button down, <I>also clicks the middle mouse button</I> to cut out
+the offending parenthesis.  <I>Cutting</I> and <i>pasting</i> text in
+wily can be done with combinations of mouse keys.  This is <B>very</B>
+quick and easy.  The resize box of the window is filled in, to indicate
+that the file has been modified.
+
+<LI>She <I>clicks the middle mouse button</I> in the word "Put" in the
+window's tag.  Wily recognizes this as the name of the builtin function
+to write the file to disk, and does so.  The resize box is cleared, to
+indicate that the file is "clean".
+
+<LI>She <I>clicks the middle mouse button</I> in the word
+<CODE>make</CODE>, and the cycle begins again.
+
+</UL>
+
+<P>This whole interaction requires six mouse clicks and much less
+time than the time to read about it.
+
+<H3>Combinations of mouse buttons</H3>
+The system does some things so that the user doesn't need to place
+the mouse accurately.  Double-clicking with the left mouse button
+selects a word, a line or a piece of text delimited by quotes, braces or
+brackets.  With the middle or right button, a click inside a selection
+will be expanded to that selection, or a click inside a word that can be
+recognised as a command or address will be expanded to that word.
+
+<P>Simultaneous combinations of mouse buttons
+(Mouse <I>chords</I>) are used for cutting and pasting.  To move some
+text from one place to another, it first is selected by dragging with
+the left mouse button.  While holding this button down, if the middle
+button is also pressed, the text is <I>cut</I>.  The text can later be
+pasted into place by holding the left button and then clicking the right
+button.  This action is easier done than said, and is much quicker than
+searching for a menu entry.
+
+<P>A mouse chord is also used as a short-hand for the idiom of
+executing a command with some argument.  While clicking with the
+middle button in the command, if the leftbutton is then pressed,
+the most recently selected text is given as an argument to the
+command.  For example, one could point to a program variable,
+click the middle and left buttons on the name of some simple
+program, and get a list showing all the places that variable
+occurs.  Clicking with the right button on any of the occurrences
+on that list will open the relevant file at the correct line.
+
+<P>The mouse cursor is often warped to where the program predicts the next
+action is likely to take place.  For example, after opening a file at a particular
+address, the cursor is warped to that position of that file.
+
+<P>The escape key selects any text typed since the last cursor movement,
+making it easier to select with the mouse.
+
+	<H2>Undo/Redo</H2>
+
+<P>Wily provides a full Undo/Redo history for each window.
+
+	<H2>Window Positioning</H2>
+
+<P>Newly created windows are placed by the program, not the user.
+While it is possible for the user to reposition or resize the window after
+it is created, window-positioning heuristics generally make
+such positioning unnecessary.
+
+<H2><A NAME="extensions">Extensions</A></H2>
+
+Wily has no extension language, but is easy to connect to other
+UNIX programs.
+
+<H3>Program output is useful</H3>
+
+<P>The output (both <CODE>stdout</CODE> and <CODE>stderr</CODE>) of
+any commands run from wily will appear in a wily window, where it may
+be useful.  For example, the author uses the shell functions <code>sg</code>
+and <code>def</code>.  <code>sg</code> (short for source grep) is
+defined as <CODE>fn sg {agrep -w -n $* *.[ch]}</CODE>, <CODE>def</CODE>
+as <CODE>fn def {grep -n '^'^$1 *.c /dev/null}</CODE>.  To find the
+definition of some C function, the author clicks with the left button
+in the name of the function, and does a middle-left button combination
+on the word <CODE>def</CODE>.  The output from <CODE>def</CODE>
+will appear in a wily window, and be something like
+<CODE>/usr/gary/src/dir/file.c:243 function(int arg, char* otherarg)</CODE>.
+Clicking here with the right mouse button will then open the file if necessary,
+and move to and highlight the correct line.  The function <CODE>sg</CODE>
+operates similarly, listing all occurrences of some identifier.  Note that
+it would be simple to modify these functions to operate with other languages
+(HTML, Java, ...) and that they could be written in any language the
+user chooses.
+
+<H3>Filter programs</H3>
+	<P> Commands beginning with
+	|, &gt; or &lt; operate on the most recent selection.  They
+	either pipe it through a command, send it to a
+	command, or replace it with the output of a
+	command.  For example, to reformat a paragraph, select
+	it (using the left button), then click anywhere in the text
+	<CODE>|fmt</CODE>.  <CODE>fmt</CODE> will be executed,
+	with its input taken from the current selection, and its output
+	replacing the current selection.
+
+<P>Programs may also be used to filter text in wily windows.  If a command
+starts with the pipe symbol <code>|</code>, it uses the most recently
+selected wily text as input and output.  Indenting, formatting, html tagging
+can all be done using standard Unix tools, or tools written by the user in
+any language.  Simply select some text, and click with the middle mouse
+button in <CODE>|cmd</CODE>.
+
+For example, here is the author's file <CODE>lib/html/guide</CODE>:
+
+<PRE>
+|title |h1 |h2 |h3 |h4
+|italic |emph |strong |bold |code |href prog.html |name remote
+|fmt &gt;spell |blanks2P
+</PRE>
+
+<H3>Wily as a front-end</H3>
+Longer-running processes may instead open
+a socket to wily, which can be used to send requests or receive
+events.  One example of this is the program <CODE>win</CODE>,
+which provides a simple terminal within Wily.
+(For details refer to <A HREF="#cap95a">[Cap95a]</A>)
+
+<P><A HREF="pythonpaper.html">Python</A>
+and Perl bindings for this message interface are available.
+
+<P>Mail and news readers or code browsers should be fairly simple to
+write using Wily as their front end.  All of these programs would
+operate in a familiar fashion (left mouse button selects, middle button
+executes, right button does a "goto").
+
+<H2>No confirmations</H2>
+
+When you close a file that wily knows contains changes, it doesn't
+bother you with a confirmation dialog, but does a backup of the file
+and prints a warning message
+in case you've made a mistake.  This is quicker in the common case that
+you <B>do</B> want to discard the changes, is simple to recover from
+if you <B>have</B> made a mistake, and <B>eliminates</B> the mistake
+of confirming a deletion that shouldn't have been confirmed.
+
+<H2><A NAME="implementation">The Implementation</A></H2>
+
+Wily is a single-threaded event-driven server process.  The events it
+waits for are keyboard and mouse actions, and output arriving
+on sockets shared with child processes.  Text display is handled
+by text widgets.
+
+<H3>Child Processes</H3>
+
+<P>To execute a command that isn't built in, the wily server forks a child,
+which modifies its execution environment, and <CODE>exec</CODE>s the
+required command.
+
+<P>The child sets its current directory to the directory the command was
+invoked from.  The child's file descriptors are set so that
+<CODE>stdin</CODE> is redirected from <CODE>/dev/null</CODE>, and
+<CODE>stdout</CODE> and <CODE>stderr</CODE> are redirected to a file
+descriptor the server listens to for output.
+
+<P>The parent adds the file descriptors passed to the child to a list of
+file descriptors that it monitors for output, and remembers which directory
+that stream is associated with, so that output will appear in an appropriate window.
+
+<P>More sophisticated client processes can open a socket to
+wily and send (and receive messages).  The idea here is that wily
+provides the "look and feel" of the user interface, with various
+client programs providing different data (mail, news, debugger...),
+
+<H3>Code bloat (not!)</H3>
+Wily's source code (excluding some libraries from Bell Labs) takes
+7600 lines of code, or 3100 counting only lines with semicolons.
+The binary (<TT>ELF 32-bit MSB executable SPARC Version 1, dynamically linked, stripped</TT>) is 150k (c.f. 234k for vi, 2044k for xemacs).
+Wily typically takes less memory to run than Xterm.
+
+<H2>Strengths, Weaknesses and Further Work</H2>
+
+<P>The things the author misses most when using another editor are:
+mouse chording for cut and paste (alternatives seem very awkward),
+opening a file to a particular line with a single mouse click, and editing
+in a proportional font.
+
+<P>Some of wily's strengths may also be seen as weaknesses:  heavy
+exploitation of bitmapped terminal and three button mouse mean wily is
+unusable on glass and paper teletypes.  The terse mouse command language is
+opaque and even intimidating for new users.
+
+<P>The author is very interested in cooperating with any HCI researchers
+interested in comparing the usability and/or ease of learning of this editor
+with more traditional ones, or in comparing mouse-based and keyboard-based
+editors.
+
+<P>Wily is not as robust or efficient as the author would like.
+
+<H2><A NAME="availability">Availability</A></H2>
+
+Wily <A HREF="wily.tgz">source code and documentation (263k)</A>
+and some binaries are
+available via FTP from sites in
+<A HREF="ftp://ftp.cs.su.oz.au/gary/">Australia</A>, 
+<A HREF="ftp://ftp.math.tau.ac.il/pub/laden/wily">Israel</A>, 
+<A HREF="ftp://ftp.cs.york.ac.uk:/pub/mhw/wily/">the UK</A> and
+<A HREF="ftp://ftp.northsea.com:/pub/plan9_unix/wily/">the US</A>.
+
+<P>The author welcomes <A HREF="mailto:gary@cs.su.oz.au">
+comments and suggestions</A>.
+
+<P>There is a mailing list for discussion
+about wily and announcements of new releases.  Mail
+<A HREF="mailto:wilyfans-request@jli.com">wilyfans-request@jli.com</A> to
+subscribe.
+The list is <A HREF="http://wwwtios.cs.utwente.nl/archive/wilyfans">archived.</A>
+
+<P>Wily runs on BSDi, AIX, OSF, HP-UX, IRIX, Linux, Solaris,
+SunOS4, (these are the OSs the author knows of to date).  With any
+luck, <CODE>gunzip, tar, configure, make install</CODE> should get you going.
+
+<H2><A NAME="History">History</A></H2>
+
+Wily is a reimplementation of Acme <A HREF="#pike95">[Pike95]</A>
+for the Unix/X environment.  Acme itself was heavily inspired by the
+Oberon <A href="#Wirt89">[Wirt89]</A> user interface.  A port was not
+possible because the Acme implementation relies on Alef
+<A HREF="#Win95">[Win95]</A>(a concurrent
+programming language not widely available) and non-portable features
+of Plan 9 <A HREF="#Pike95a">[Pike95a]</A>.
+
+<P>The name "wily" derives from Wile E. Coyote, an avid user of
+Acme products.
+
+<H2>Acknowledgements</H2>
+
+Many suggestions on wily and this paper, 
+and much of the code  were received
+from Bill Trost <CODE>&lt;trost@cloud.rain.com&gt;</CODE>.  Libraries
+used include libXg and libframe, part of the Sam distribution by Rob Pike and
+Howard Trickey, and libtext by James Farrow.
+<P>
+This is an incomplete, alphabetical list of other people who have  made significant contributions to wily:
+Assar,
+Davor Cubranic,
+Kyle Dean,
+Stephen Gallimore,
+Mark H. Wilkinson, 
+Bjorn Helgaas, 
+Steve Kilbane,
+Beirne Konarski,
+Bob Krzaczek,
+Alberto Nava,
+Arnold Robbins,
+Rich Salz,
+Scott Schwartz, 
+Chris Siebenmann,
+and Richard Wolff.
+
+<H2>References</H2>
+<DL>
+<DT><A NAME="Cap95">[Cap95]</A>
+<DD>Gary Capell:
+	<CITE><A HREF="user.html">Wily User's Guide </A></CITE>
+	<BR><CODE>http://www.cs.su.oz.au/~gary/wily/user.html</CODE>
+
+<DT><A NAME="Cap95a">[Cap95a]</A>
+<DD>Gary Capell: 
+	<CITE><A HREF="msg.html">Wily Programmer's Guide </A></CITE>
+	<BR><CODE>http://www.cs.su.oz.au/~gary/wily/msg.html</CODE>
+
+<DT><A NAME="pike95">[Pike95]</A>
+<DD>Rob Pike: <CITE><A HREF="http://plan9.bell-labs.com/plan9/doc/acme.html">Acme: A User Interface for Programmers</A></CITE>,
+<BR>Plan 9 Programmer's Manual, Volume Two, 2nd Ed.
+<BR><CODE>http://plan9.bell-labs.com/plan9/doc/acme.html</CODE>
+
+<DT><A NAME="pike95a">[Pike95a]</A>
+<DD>Rob Pike et al.: <CITE><A HREF="http://plan9.bell-labs.com/plan9/doc/9.html">Plan 9 from Bell Labs</A></CITE>,
+<BR>Plan 9 Programmer's Manual, Volume Two, 2nd Ed.
+<BR><CODE>http://plan9.bell-labs.com/plan9/doc/9.html</CODE>
+
+<DT><A NAME="Win95">[Win95]</A>
+<DD>Phil Winterbottom: <CITE><A HREF="http://plan9.bell-labs.com/plan9/doc/ref.html">Alef language Reference Manual</A></CITE>,
+<BR>Plan 9 Programmer's Manual, Volume Two, 2nd Ed.
+<BR><CODE>http://plan9.bell-labs.com/plan9/doc/ref.html</CODE>
+
+<DT><A NAME="vanRo95">[vanRo95]</A>
+<DD>Guido van Rossum: <CITE>Python Tutorial</CITE>,
+	<BR>CWI Technical Report CS-R9526,
+	<BR>1995
+	<BR><CODE>http://www.python.org/</CODE>
+
+<DT><A NAME="Wirt89">[Wirt89]</A>
+<DD>N. Wirth and J. Gutknecht: <CITE>The Oberon System</CITE>,
+	<BR>Software - Practice and Experience,
+	<BR>Sep. 1989, Vol 19 #9, pp 857-894
+
+</DL>

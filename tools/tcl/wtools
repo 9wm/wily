@@ -1,0 +1,12 @@
+#!wtcl
+#
+#	$Header: /u/cvs/wtcl/wtools,v 1.2 1996/11/12 23:34:03 cvs Exp $
+#
+wily init
+
+if [expr $argc != 2] {
+	puts "usage: $argv0 <id> <tools>"
+	exit 1
+}
+
+wily settools [lindex $argv 0] [lindex $argv 1]

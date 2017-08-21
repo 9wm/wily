@@ -1,0 +1,127 @@
+<!doctype linuxdoc system>
+<article>
+<title>Wily/Python Interface
+<author>
+<htmlurl url="http://www.cs.su.oz.au/~gary/" name="Gary Capell">
+<date>v0.11.0 April 1996
+
+<abstract>
+This document describes the Python interface to <htmlurl
+url="http://www.cs.su.oz.au/~gary/wily/" name="Wily">, which
+is implemented in <tt/wilymodule.c/. It defines three classes:
+<tt/Connection/, <tt/Win/ and <tt/Event/. A <tt/Connection/ is
+initialized with no arguments, and represents the connection to Wily.
+A <tt/Win/ object is created by the <tt/Connection/, and is usually
+initialized with the name for a new window. The <tt/Connection/ has
+methods to return a list of windows representing all the windows
+currently open at Wily, to create a new window, and to return the next
+<tt/Event/ from Wily. A <tt/Win/ has methods to change its event mask,
+name or ``tools'' (useful text in the window's tag), read or modify
+some of its text, or simulate a B2 or B3. <tt/Event/ objects have
+attributes to identify the window to which they refer, the event type,
+and other optional attributes depending on the event type. B2 and B3
+events include the text selected, and where it was located in the text.
+Text modifying events indicate where the change took place, and what
+new text was added. See also the <htmlurl url="msg.html" name="Wily
+Messaging Interface"> for C programs, the <htmlurl url="user.html"
+name="Wily User's Guide"> and <htmlurl url="pythonpaper.ps"
+name="Wily+Python&gt;Emacs+Lisp"> This document is also available in
+<htmlurl url="python.ps" name="Postscript">.
+</abstract>
+
+<toc>
+
+<sect>Connection<P>
+<sect1>Creating<P>
+<verb>
+import wily
+con = wily.connection()
+</verb>
+<sect1>Attributes
+None
+<sect1>Methods<P>
+<descrip>
+<tag/win(name)/
+Returns a new window, with the given <tt/name/
+<tag/list()/
+Returns a list of <tt/win/s representing the windows currently open in
+wily.
+<tag/event()/
+Returns the next Event.  Note that this function will block until it receives
+an event.
+<tag/event_wouldblock()/
+Indicates whether <tt/event()/ would block.
+</descrip>
+
+<sect>win<P>
+<sect1>Creating<P>
+<tt/win/ objects are returned by <tt/connection.win(name)/ or
+as part of <tt/connection.list()/
+
+<sect1>Attributes<P>
+<descrip>
+<tag/id/
+	window id
+<tag/name/
+	name
+<tag/dot/
+a (from,to) tuple representing the currently selected portion of the
+window.
+</descrip>
+
+<sect1>Methods<P>
+<descrip>
+<tag/attach()/
+Request events for this window.
+
+<tag/detach()/
+Cancel request for events for this window.
+
+<tag/setname(s)/
+Set the name of this window.
+
+<tag/settools(s)/
+Set the toolbar for this window.
+
+<tag/read((from,to))/
+Read some range from this window.
+<P>Called with a tuple representing the range to read, returns a UTF
+string.
+
+<tag/replace((from,to),s)/
+Replace some range of window with some other text.
+<P>Called with a tuple representing the range to replace, and a string
+to replace it with. Insertion and deletion are special cases of
+<tt/replace/, with null range or replacement string respectively.
+
+<tag/run(s)/
+Execute some text in this window. Makes wily act as if <tt/s/ had
+been selected with button 2 in this window. This can be used to
+access Wily's built-in functions. For example, to delete <tt/w/, call
+<tt/w.run("Del")/
+
+<tag/goto(s)/
+"Goto" some text in this window. Makes wily act as if <tt/s/ had been
+selected with button 3 in this window. This can be used to open a new
+window, or search for some regular expression. Returns a <tt/win/ if the
+Goto resulted in a successful search in this window.
+</descrip>
+
+<sect>Event
+<sect1>Attributes
+<P><descrip>
+<tag/id/
+	of the window the event occurred in
+<tag/t/
+	Message type: one of <tt/wily.GOTO/, <tt/wily.EXEC/ or <tt/wily.REPLACE/.
+<tag/r/
+	(from,to) tuple
+<tag/s/
+	string
+</descrip>
+<sect1>Methods
+<P><descrip>
+<tag/returnevent/
+	Send this event back to Wily to interpret
+</descrip>
+</article>

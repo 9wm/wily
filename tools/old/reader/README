@@ -1,0 +1,122 @@
+First bash at a mail reader. There are two pieces of code here:
+
+First off, you've got the generalised reader/viewer thingy. This
+is intended to be used as the basis for a newsreader too, but I obviously
+haven't got that far yet. It's mostly either implemented or hooks,
+depending on which part you look at. It supports windows of
+articles and lists of subjects, and there can be lots of either type. However,
+I've only ever run it with one list window, so I've no idea if the code'll
+work if you try multiple articles. It has hooks for saving internal
+copies of window contents, but I don't use them at the moment (I
+can't be bothered to work out what to do if someone does a sweeping
+delete of half the contents of a list window).
+
+Makefile
+getmsg.c		Gets messages from wily. Used to be ridiculously
+				complicated, before libmsg took over msg queueing
+				(thank you, gary).
+headers.h
+proto.h
+reader.c		The generic reader thingy. Unpleasant.
+reader.h
+utils.c			Coupla handy things.
+
+
+Then you've got the mail-specific stuff. This currently cheats for
+sending messages. For example, it uses the From: line, and just
+feeds articles into sendmail without caring what they look like.
+
+mail.c		Main mail program.
+mail.h		Definitions. Hack MTU to be something that accepts
+			a complete article on stdin, including headers.
+mbox.c		Mailbox handling routines. These are actually swiped from
+			a 9term-like mail reader I wrote about a year ago, and never
+			finished. I *think* they're ok at updating your mailbox, but,
+			well, they might not be. Handle with care.
+mbox.h
+solaris.c	The mbox routines assume that the whole mail file is accessible
+			as a single string. This uses malloc/fread to do this. It used to
+			use mmap(), but that's buggy over NFS.
+
+includepatches	Changes to the libmsg prototypes.
+libmsgpatches	Some additions to the msg library:
+				- rpc_settag() and rpc_setname() added.
+				- rpc_new() gets a "isreal" argument.
+wilypatches		Hacks to wily, against 0.9.5. Looking through them, they do:
+				- Add a "Dot" builtin, that toggles display of .* files. By
+				default, they're not shown. B2 on Dot and Get to show them.
+
+				- Adds support for rpc_goto() to wily.
+
+				- Adds (very basic) support for rpc_settag() to wily.
+
+				- Doesn't complain about virtual windows, or attempt to
+				back them up.
+
+winpatches	Just changes win to say its window isn't real.
+
+USAGE
+Invoke with "mreader [-ma] mailboxname". The "-ma" option allows you
+to have multiple article windows open at once. By default, it only has the
+one article window open, because it's easier to find where the article
+window is, once you've positioned it. Unfortunately, this means that
+you don't get to see the article you're replying to. To fix this, there's a
+"multiart" command, which toggles this value from within the reader.
+
+First window to appear is the list window. It shows all the articles
+from the given mailfile, one per line. The line contains the From and
+Subject fields, but it's currently chopped to make things look nicer.
+
+You open an article by B3'ing on its subject line. What else?
+
+Commands supported:
+	exit		exit without doing anything to the mailfile.
+	quit		save any changes to the mailfile before quitting.
+	delete	delete the selected article. "selected" means the article
+			which has dot in its subject line. This means you can
+			click on the subject line with either B1 or B3, and then
+			click on delete. Of course, if you click on delete within
+			an article window, that article is the one that is deleted.
+			Delete doesn't actually do anything except mark the
+			article for deletion, and puts a "D" before at the start of
+			the subject line.
+	undelete reverses delete.
+	comp	compose a new message. You get a blank article window
+			with From, To and Subject fields. Don't delete them.
+	reply	Reply to the article (article is selected in the same fashion,
+			i.e. B1/B3 list window, or just the article that the reply
+			cmd was executed in). The To field is filled in from the
+			From field. You can use "inc" or "incall" to include the
+			text of the article you're replying to.
+	abort	junk a comp/reply article without sending it.
+	deliver	post a complete comp/reply article (well, feed it to sendmail).
+	savefile	sets the name of the file that "save" writes to.
+	save	appends the current message into the savefile. Creates the
+			file if it doesn't exist.
+	multiart toggles the "only one article window at once" flag. This is
+			handy for viewing several articles or reading one article
+			while replying to another.
+	inc [n]	Includes a message into the current position of the current
+			message. It's supposed to accept a message number, too,
+			but I haven't tried that.
+	incall	Same as inc, but will include the headers of the message, too.
+
+Bugs
+Vast numbers of them...
+
+Currently needs to have at least *something* in your mailbox, otherwise
+it exits.
+
+At the moment, it's one-shot - it never rescans your mailbox to see if more
+mail has arrived (except when writing changes back on "quit"; it *has* to
+then....). This means you still need another mail notification program. I
+recommend Faces. :-)
+
+The preferred means of reading the mailbox is with mmap(), but under
+Solaris 2.3, that's buggy for NFS-mounted directories, so right now it
+compiles with a malloc-and-fread method instead.
+
+Unlike most windows, it current has the tools *before* the window label.
+This is because of the broken tags problem. Right now, I'm cheating,
+and inserting the tools at the start of the tag, instead of the end - that
+seems to work...

@@ -1,0 +1,66 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) wgoto %R%.%L% of %D%
+.TH wgoto 1 "%R%.%L% of %D%"
+.SH NAME
+wgoto \- Search for and move to an address
+.SH SYNOPSIS
+.B wgoto
+.RB [ \-v ]
+.I address
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I wgoto
+prints its version number and date and exits.
+.SH DESCRIPTION
+.I wgoto
+must be able to connect to a running 
+.IR wily (1).
+.PP
+.I wgoto
+searches for
+.IR address .
+which must be a
+.IR wily (1)
+address.
+If the search is successful, dot is set.
+.SH RETURNS
+.I wgoto
+returns zero if it was able to find the address,
+otherwise it returns non-zero.
+.SH EXAMPLES
+Find the superuser entry in /etc/passwd:
+.Ds
+wgoto '/etc/passwd:/^root:/'
+.De
+.SH SEE ALSO
+.IR wily (1)
+.IR wreplace (1)
+.IR Tag (1)
+.SH AUTHOR
+Alan Watson (alan@oldp.nmsu.edu)

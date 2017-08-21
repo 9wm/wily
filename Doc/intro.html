@@ -1,0 +1,123 @@
+<HTML><HEAD><TITLE>Introduction to Wily</TITLE></HEAD>
+<BODY>
+
+<H1>Introduction to <A HREF="index.html">Wily</A></H1>
+
+<H2>What is it?</H2>
+
+<P>Wily is a mouse-oriented, text-based working environment for
+programmers.  It lets you interact with your files, directories and
+other programs through mouse and keyboard operations on plain text.
+
+<P><TT>./configure; make</TT> 
+should compile the program with no problems on most
+Unixes with X Windows.
+
+<H2>What does it look like?</H2>
+
+<A HREF="example.gif">
+<IMG SRC="thumb.gif" ALT="screen shot" ALIGN=left></A>
+Wily divides the screen into columns, and the columns
+into windows.  Each window has a one-line <I>tag</I>
+which holds the name of the window, and some useful
+bits of text.  Text can be displayed in either proportional
+or fixed-width fonts.  Unicode fonts are supported.
+Text is read and written in UTF8 format, which is backwards
+compatible with 7-bit ASCII.  The screen shot demonstrates
+some of these features.  Directories are tabulated.
+
+<H2>What's good about it?</H2>
+
+<P>Wily's most attractive qualities are simplicity,
+power and speed.
+
+<H3>Simplicity</H3>
+
+<P>The interface is simple to learn.
+A <A HREF="onepage.html">one page</A> user manual
+gives a reasonably complete description of how to use Wily.
+
+<P>The implementation is also reasonably simple:
+<TT>wc -l *.[ch]</TT> gives a total of 8832 lines.
+
+<H3>Power</H3>
+
+<P>Wily's simplicity derives from having few features.
+However, these features are quite general, have few
+complicating exceptions and combine well together.
+<B>Every</B> piece of text on screen can be interacted
+with in exactly the same way.
+Part of Wily's power emerges from being able to combine
+a few simple primitives in arbitrary combinations
+(like chess or go).
+
+<P>Wily also encourages the use of other tools from the Unix
+toolchest.  It is easy to build a set of (for example) HTML
+processing tools that work well with Wily.
+
+<H3>Speed</H3>
+
+<P>With some practice, a decent mouse and mousepad,
+a Wily user can be very quick.  The author is moved
+almost to tears of frustration using many other editors.
+You need never retype anything while using Wily.
+
+<H2>Interesting Features</H2>
+<H3>Backups</H3>
+Whenever a window containing changes not refleted on disk is deleted,
+Wily first makes a backup of the file, instead of initiating an "are you sure?"
+dialog.  This seems not only quicker but safer than forcing a dialog, as
+occasionally the user might give the wrong answer to a dialog, whereas
+with this system a backup is always there.
+
+<H3>Proportional text by default</H3>
+This is much easier to read.  On the rare occasions you need
+to drop back to monospace, it can be done with a mouse-click.
+
+<H3>Mouse "chords"</H3>
+i.e. using a combination of mouse buttons for Cut and Paste.
+This is way cool.
+
+<H3>Unicode text</H3>
+This is becoming more expected than unusual.
+
+<H2>Drawbacks and problems</H2>
+
+<P>Wily is certainly not for everyone.
+
+<P>The main complaints against Wily, with some responses,
+follow:
+<DL>
+<DT>You have to use the mouse too much
+<DD>The mouse is currently the best way to quickly select
+an arbitrary piece of text on screen.  Mostly you're
+either using the mouse exclusively or the keyboard exclusively.
+It is quite rare to "thrash" between the two.
+
+<DT>There aren't enough control keys/function keys
+<DD>go away
+
+<DT>There's no syntax highlighting
+<DD>Wily is for editing plain text
+
+<DT>I have to use an external program to do global replace?
+<DD><OL><LI>this is pretty simple and reasonably efficient
+	<LI>Wily may someday include this functionality
+	</OL>
+	
+<DT>A builtin extension language would be more efficient than
+	using external programs
+<DD>Probably.  The current system is much simpler and is
+efficient enough so far.
+
+<DT>It doesn't seem very intuitive
+<DD>In other words, it doesn't seem very familiar, at first.
+Of course.  This is a necessary price of being very different.
+On the other hand, Wily is so simple it takes very little time
+to <I>become</I> familiar with it.
+
+</DL>
+
+<HR><A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>
+</BODY>
+</HTML>

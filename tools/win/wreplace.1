@@ -1,0 +1,85 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) wreplace %R%.%L% of %D%
+.TH wreplace 1 "%R%.%L% of %D%"
+.SH NAME
+wreplace \- Replace an address with the contents of stdin.
+.SH SYNOPSIS
+.B Goto
+.RB [ \-v ]
+.RB [ \-c ]
+.RB [ \-b ]
+.I address
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I Goto
+prints its version number and date and exits.
+.TP
+.B \-c
+If the
+.B \-c
+option is present,
+.I wreplace
+creates the window if necessary.
+.TP
+.B \-b
+If the
+.B \-b
+option is present,
+.I wreplace
+sets the backup flag on any windows it creates.
+.TP
+.B \-d
+.SH DESCRIPTION
+.I wreplace
+must be able to connect to a running 
+.IR wily (1).
+.PP
+.I wreplace
+searches for 
+.IR address
+and replaces it with the contents of the standard input.
+.I address
+must be a valid wily address.
+.SH RETURNS
+.I Goto
+returns zero if it was able to execute the remote goto command,
+otherwise it returns non-zero.
+No indication of the success or the failure of the actual
+search is given.
+.SH EXAMPLES
+.PP
+Create a manifest file:
+.Ds
+ls | wreplace -c -b MANIFEST:,
+.De
+.SH SEE ALSO
+.IR wily (1)
+.IR wgoto (1)
+.SH AUTHOR
+Alan Watson (alan@oldp.nmsu.edu)

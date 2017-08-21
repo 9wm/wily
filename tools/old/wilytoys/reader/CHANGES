@@ -1,0 +1,29 @@
+0.1 -> 0.2
+========
+
+Filters out most common garbage headers (toggle this with allheaders).
+
+Can delete/undelete/save multiple messages, by sweeping them.
+
+[Un]delete is a lot less effort on the screen updates.
+
+Commit now writes changes back to the mailbox, without quitting. Doesn't
+read in new mail, though.
+
+Rescan reads in any new mail that has arrived. Doesn't write any current
+changes, though.
+
+Rescans your mailbox for new mail automatically. Does this every 60
+seconds, by default. You have to hack mail.h to change this...
+
+If you're running it in non-multiart mode (default), then it tries to avoid
+trashing your composition windows when you pull up a message window.
+
+savefile has a default parameter: $SAVEFILE if set, or $HOME/mbox
+otherwise.
+
+Sets the title of article windows to just mailboxname/msgnum, because
+the From: lines are too long.
+
+Uses MAXPATHLEN instead of FILENAME_MAX, because FILENAME_MAX
+is way too small on some machines.

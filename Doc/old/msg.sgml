@@ -1,0 +1,307 @@
+<!doctype linuxdoc system>
+<article>
+<title>Wily Messaging Interface
+<author><htmlurl url="http://www.cs.su.oz.au/~gary/" name="Gary Capell">
+<date>v0.11.0 April 1996
+
+<abstract>
+This document explains <htmlurl
+url="http://www.cs.su.oz.au/~gary/wily/msg.h" name="msg.h">
+
+There are five sections. The first two describe the Msg struct and the
+list of message types, with a brief explanation of each.
+
+The last three detail functions to establish a connection to wily; to
+pack and unpack messages for sending to the network; and to access a
+"cooked" RPC-style interface.
+
+A <htmlurl url="msg.ps" name="Postscript version"> is available.
+</abstract>
+
+<toc>
+
+<sect>The Msg Struct<P>
+
+This is the "in-memory" representation of the messages which flow
+between Wily and remote programs.  The representation of messages
+as they flow across the network is deliberately hidden.
+
+<tscreen><verb>
+struct Msg {
+	Mtype	t;
+	Id	m;	/* message */
+	Id	w;	/* window */	
+	Range	r;
+	uchar	flag;
+	char	*s;
+};
+</verb></tscreen>
+
+<P><tt/s/ is a null-terminated UTF string, and must be a complete UTF
+sequence.
+
+<P><tt/t/ identifies the type of the message.  The possible values of
+<tt/t/ are enumerated in the next section. 
+<P><tt/m/ identifies the message within a sequence of messages.
+<P><tt/w/ identifies a particular window.
+<P><tt/r/ specifies a contiguous set of runes within a window.
+The range <tt/r.p0, r.p1/ means all the characters with offset not
+less than <tt/r.p0/, and strictly less than <tt/r.p1/
+<P><tt/flag/ is used to modify the meaning of some types of message,
+and can be used to hold a true/false value, or a bit mask.
+
+<P>The client sends request messages to Wily. For every request message,
+Wily sends back either a reply message (if the request was fulfilled
+successfully) or an error message.  In either case, the message sent
+in response will have the same message id (<tt/m.m/) as the request
+message.  Each reply message has a <tt/Mtype/ value one greater than
+the corresponding request message.
+
+<P>Wily may also send event messages to the client, if the client
+has asked for them.
+
+<sect>The Mtype enum
+
+<P>For each of the message types defined, there is a brief description,
+and an indication of which fields  of the <tt/Msg/ struct are significant
+for this type of message.
+
+<P>The names of request messages start with <tt/WM/,
+those of  response messages with <tt/WR/, and those of events with
+<tt/WE/
+
+
+
+<sect1>Requests/Responses
+
+<P><descrip>
+<tag/WRerror(s)/	Message type returned by wily if there's an
+				error in decoding or fulfilling some request.
+				<tt/s/ contains an error
+				message.
+
+<tag/WMlist/
+Asks wily to send a list of windows currently displayed.
+<tag/WRlist(s)/
+<tt/s/ contains a list of lines terminated by newlines. Each line
+contains a name and an id (as a textual number) separated by whitespace.
+
+<tag/WMnew(s,flag), WRnew(w)/
+Asks wily to create a window with a given label (which may be an
+existing file). The new window will be treated as a normal file,
+with backups kept for it, If and only if <tt/flag/ is set.
+
+<P><tt/w/ is set to the id of the newly created window.
+
+<tag/WMattach(w,flag), WRattach/
+Set the event mask for <tt/w/ to <tt/flag/.  Used to start or stop
+the flow of events for a particular window.  See the 
+<em/Events/ section for details on what values the <tt/mask/
+can have.
+
+<tag/WMsetname(w,s), WRsetname/
+Change <tt/w/'s name to <tt/s/.
+
+<tag/WMsettools(w,s), WRsettools/
+Change the tools for this window. Tools are simply words appearing in
+the tag of a window, after the window name and before the 'pipe' symbol.
+They are (will be) automatically maintained, i.e. they will be replaced
+if accidentally deleted.
+
+<tag/WMread(w,r),WRread(s)/
+Read the text from <tt/w/ in range <tt/r/.
+<P><tt/s/ is the requested text, as a UTF string.
+
+<tag/WMreplace(w,r,s), WRreplace/
+Replace the text from <tt/w/ in range <tt/r/ with UTF string <tt/s/
+
+<tag/WMexec(w,s),WRexec/
+Act as if <tt/s/ had been clicked with B2 in <tt/w/. Note that this can
+be used to access Wily's built in functions.
+
+<tag/WMgoto(w,r,flag,s), WRgoto(w,r)/
+Act as if <tt/s/ had been clicked with b3 in <tt/w/ at <tt/r/, possibly
+opening a file or directory, or searching for some combination of
+line address, character address or regular expression. If and only if
+<tt/flag/ is set do we select the range found, and set "dot". In either
+case, we return the window and text range to which we would have jumped.
+<P>This request will return an error if it tries to search for something
+which isn't there.
+
+<P>The response message contains the window and range we went to.
+
+<tag/WMfencepost/
+Not used for any message.  Receiving a message with
+Mtype greater than <tt/WMfencepost/ indicates some horrible error.
+</descrip>
+
+<sect1>Events
+
+<P>These are the messages sent by Wily to clients who request
+to be notified of events in a particular window using <tt/WMattach/
+
+<P>The event types are used to form a mask to be given as a parameter to
+the <tt/WMattach/ request. For example, to request only exec and goto
+events, set <tt>m.f = WEexec|WEgoto</tt> before sending message <tt/m/
+
+<descrip>
+<tag/WEexec(w,s)/
+<tt/s/ was selected with B2 somewhere in <tt/w/
+
+<tag/WEgoto(w,r,s)/
+<tt/s/ was selected with B3 at <tt/r/ in <tt/w/
+
+<tag/WEdestroy(w)/
+<tt/w/ has been destroyed.
+
+<tag/WEreplace(w,r,s)/
+The text at <tt/r/ in <tt/w/ was replaced by <tt/s/ Note that insertion.
+and deletion are simply special cases of replacement                   .
+<tag/WEfencepost/
+Never actually used. Any message with <tt/Mtype/ greater than
+<tt/WEfencepost/ is a request or response. Any message with <tt/Mtype/
+less than <tt/WEfencepost/ is an event.
+</descrip>
+
+<P>If a client is sent an event which it doesn't want to use,
+it can send the event back to wily.  Wily will act on the event,
+but not send a confirmation back to the client.
+
+<sect>Establishing a Connection
+
+<P>Simply call <tt/client_connect()/, which returns a file descriptor
+open for reading and writing to Wily, or a negative number if
+there's been some error.
+
+<P>Wily and client programs both use the environment variable
+<tt/&dollar;WILYFIFO/ to establish communications, and Wily sets
+this variable for any children it creates.
+
+<sect>Packing and Unpacking Messages<P>
+<descrip>
+<tag/int msg_size (Msg *m);/
+Returns the size of buffer that will be needed to "flatten" <tt/m/
+
+<tag/void		msg_flatten	(Msg*m, char*buf);/
+"Flatten" <tt/m/ into <tt/buf/, which must have enough storage space
+allocated.
+
+<tag/ulong	msg_bufsize	(char*buf);/
+Returns the total size of the flattened message starting at <tt/buf/.
+Assumes that at least <tt/HSIZE/ bytes are stored in <tt/buf/.
+
+<P>A useful macro is
+<verb>
+#define FULLMSG(ptr,n) ( (n) >= HSIZE &amp;&amp; (n) >= msg_bufsize(ptr) )
+</verb>
+
+<tag/int msg_init (Msg*m, char*buf);/
+	The reverse of <tt/msg_flatten/.  Fills in the fields of 'm'
+	using the flat representation starting at <tt/buf/
+	<tt/Msg_init/ assumes that <tt/buf/ holds the complete message.
+	<tt/m->s/ will point to an area within <tt/buf/, but <tt/buf/
+	itself is not modified.
+<tag/void		msg_print	(Msg *m);/
+	Print a human-readable form of <tt/m/ to <tt/stderr/
+</descrip>
+
+<sect>RPC-style interface
+
+<P>These functions aren't necessary to interact with Wily.
+However, they are convenient, and provide some type-checking
+to help make sure you send the right messages.
+
+<sect1>Opening, Closing and Checking the RPC interface
+
+<P><descrip>
+<tag>Handle* rpc_init (int fd);</tag>
+Create a new RPC handle to use file descriptor <tt/fd/, which was
+probably returned from <tt/client_connect/
+
+<tag>Bool rpc_isconnected(Handle*h);</tag>
+Indicate whether or not <tt/h/ is still connected.
+
+<P>If the RPC library starts receiving gibberish messages, it will cut
+the connection, and will return a "not connected" error message for
+every request.
+
+<tag>void rpc_free(Handle*h);</tag>
+Release any resources used by <tt/h/, and free <tt/h/ itself.
+</descrip>
+
+<sect1>Requests
+
+<P>If there's any sort of failure, all of these functions return
+a pointer to an error message, which is stored in a static buffer
+and only guaranteed to remain valid until the next <tt/rpc_*/
+function is called.  After a failure, it's possible that the connection
+to wily has been lost.  This should be checked using <tt/rpc_isconnected/
+
+<P>If successful, these functions return NULL.
+
+<descrip>
+<tag>char*	rpc_list		(Handle*h, char **bufptr);</tag>
+If successful, allocates a string, stores the window list in the string,
+and stores a pointer to the string in <tt/bufptr/. Don't forget to
+<tt/free(*bufptr)/ when you're finished.
+
+<tag>char*	rpc_new		(Handle*h, char *s, Id*id);</tag>
+Create window with name <tt/s/, setting <tt/id/ if successful.
+
+<tag>char*	rpc_attach	(Handle*h, Id w, ushort mask);</tag>
+Request events associated with <tt/w/ and matching
+event <tt/mask/. This will fail if <tt/w/ doesn't
+exist, or is already sending its events somewhere else.
+
+<tag>char*	rpc_detach	(Handle*h, Id w);</tag>
+	Cancel request for events associated with <tt/w/
+
+<tag>char*	rpc_setname	(Handle*h, Id w, char *s);</tag>
+	Set the name of <tt/w/ to <tt/s/
+
+<tag>char*	rpc_settools	(Handle*h, Id w, char *);</tag>
+	Set the tools section of <tt/w/ to <tt/s/
+	
+<tag>char*	rpc_read		(Handle*h, Id w, Range r, char*buf);</tag>
+	Read range <tt/r/ from <tt/w/ into <tt/buf/, which must
+	have enough space (<tt/UTFmax * RLEN(r)/).  Fails if <tt/r/
+	is not contained in window <tt/w/
+
+<tag>char*	rpc_replace	(Handle*h, Id w, Range r, char*s);</tag>
+	Replace range <tt/r/ in <tt/w/ with UTF string <tt/s/
+
+<tag>char*	rpc_exec		(Handle*h, Id w , char *s);</tag>
+Cause Wily to act as though <tt/s/ were selected in <tt/w/ with button
+2.
+
+<tag>char* rpc_goto (Handle*h, Id *w , Range *r, char*s, Bool setdot);</tag>
+Make Wily act as though <tt/s/ were selected in <tt/w/ with button 3.
+
+<P>Sets <tt/*w/ and <tt/*r/ with the window and range found by the search
+operation.  Actually jumps to and selects some text if and only if <tt/setdot/
+is true.  This request will return an error if it tries to search for something
+which isn't there.
+
+</descrip>
+<sect1>Events<P>
+
+<descrip>
+<tag>int		rpc_event	(Handle*h, Msg *m);</tag>
+	Block until an event is received by <tt/h/ and fill
+	in <tt/m/.  Returns 0 for success, -1 for failure.
+	After a successful call to <tt/rpc_event/,
+	<tt/m->s/ will need to be freed.
+
+<tag>char *rpc_bounce(Handle *h, Msg *m)</tag>
+	Returns <tt/m/, which must be an event filled
+	in by <tt/rpc_event/, back to wily, and frees <tt/m->s/.
+	Useful for events which we receive but we'd rather wily
+	took the default action on.
+
+<tag>Bool		rpc_wouldblock(Handle*h);</tag>
+	Returns <tt/true/ if <tt/rpc_event/ would block.
+	Only useful if your program
+	is reading from other input sources as well. (e.g. see <tt/win.c/)
+</descrip>
+
+</article>

@@ -1,0 +1,6 @@
+#!/bin/rc
+# script to make line numbers from diff look like addresses
+# to Wily.
+f1 = $1
+f2 = $2
+exec /usr/bin/diff $*  | perl -pe '$| = 1; s!^(([0-9]+)(.)([0-9]+).*)!\1 '^$f1^':\2  \3 '^$f2^':\4!;'

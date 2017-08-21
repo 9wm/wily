@@ -1,0 +1,11 @@
+SHELL=/bin/sh
+srcdir=@srcdir@
+VPATH=@srcdir@
+CC=@CC@
+RANLIB=@RANLIB@
+INCLUDES=$(srcdir)/../include
+CFLAGS=@CFLAGS@ -I.. -I$(INCLUDES)
+LIB=libmsg.a
+OBJS= connect.o msg.o util.o rpc.o
+include $(INCLUDES)/Makelib
+$(OBJS):	$(INCLUDES)/msg.h

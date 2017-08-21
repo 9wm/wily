@@ -1,0 +1,193 @@
+The mail and news reader software is for wily 0.98. I haven't got
+around to converting them to use the 1.0 beta, because I *use* them,
+and Gary thinks the beta isn't ready for daily use yet.
+
+MAIL READER USAGE
+Invoke with "mreader mailboxname". The "-ma" option of the previous
+version is still there, but it doesn't do anything. This is explained
+below.
+
+First window to appear is the list window. It shows all the articles
+from the given mailfile, one per line. The line contains the From and
+Subject fields, but it might be chopped to make things look nicer.
+
+You open an article by B3'ing on its subject line. What else?
+
+Commands supported:
+	exit		exit without doing anything to the mailfile.
+	quit		save any changes to the mailfile before quitting.
+	delete	delete the selected article. "selected" means the article
+			which has dot in its subject line. This means you can
+			click on the subject line with either B1 or B3, and
+			then click on delete. If you sweep more than one
+			subject line, then all the affected articles are
+			deleted. Of course, if you click on delete within an
+			article window, that article is the one that is
+			deleted.  Delete doesn't actually do anything except
+			mark the article for deletion, and puts a "D" before at
+			the start of the subject line.
+	undelete reverses delete.
+	comp	compose a new message. You get a blank article window
+			with From, To and Subject fields. Don't delete them.
+	reply	Reply to the article (I recommend that you only use this
+			from within a particular article). The To field is filled in from the
+			From field. You can use "inc" or "incall" to include the
+			text of the article you're replying to.
+	abort	junk a comp/reply article without sending it.
+	deliver	post a complete comp/reply article (well, feed it to your mail agent).
+	next	Display the next message in the current window.
+	prev	Display the previous message in the current window.
+	savefile	sets the name of the file that "save" writes to.
+	save	appends the current message into the savefile. Creates the
+			file if it doesn't exist. You can also sweep several articles
+			in the list window, then click on save (in the list window),
+			and it'll save all of them.
+	allheaders toggles whether all header fields are displayed. By default,
+			a particular set are suppressed (the set is in the array
+			hidden_hdrs[] in mail.c).
+	inc [n]	Includes a message body into the current position of the current
+			message. If you specify a message number, it'll include that
+			message.
+	incall	Same as inc, but will include the headers of the message, too.
+	commit	Write changes back to the mailbox, but don't actually quit.
+	rescan	Load any new mail that has arrived. Doesn't write any changes
+			done so far, though.
+
+Window Control
+The "multiart" mode in the last version didn't really work too well. I've
+adopted a compromise that fits with the way I read mail, and which may
+not work for you. Here's what happens:
+
+	- When you B3 on an article's entry in the list, a window is opened for
+	the article, unless there's already a window open and displaying that
+	article, in which case you warp to it.
+	- next and prev operate only in article windows, and replace the
+	current window's contents with the next/previous message
+	- composition articles (comp, reply) are always created from scratch,
+	and exist until you explicitly close them with one of deliver, abort, quit,
+	exit or Del.
+
+Configuration
+headers.h contains a few defines that you can twiddle - the maximum length
+of the sender and subject details can be set here, and you can also define
+whether the list shows the sender's email address or full name. The
+parsing of From lines is fairly broken, but it'll do for now.
+
+mail.c contains the hidden_hdrs[] array, which you can alter if you don't
+like the default set of displayed headers.
+
+mail.h defines MTU, which is your mail transfer utility. This has to be
+capable of accepting a fully-formed message on stdin, without needing to
+be told destination addresses on the command line.
+
+It also defines the directory where your mail files are, and the number
+of seconds it waits before rescanning the mailbox for changes. You can
+also set the name of the environmental variable you use to specify the
+default file to save messages to.
+
+Bugs
+Probably vast numbers of them... Ones I know about are.:
+
+Unlike most wily windows, it current has the tools *before* the window label.
+This is because of the broken tags problem. Right now, I'm cheating,
+and inserting the tools at the start of the tag, instead of the end - that
+seems to work...
+
+In one case, I have seen the mailer *LOSE* incoming mail. I use Faces
+to announce incoming mail, but a commit after the mail arrived didn't
+display it. I haven't been able to reproduce this, but be warned...
+
+If you have '.' in the message body, it's not escaped before the body is
+sent to sendmail, so that terminates the message.
+
+If you delete windows, view a deleted message, and then do a commit,
+the article window remains open.
+
+Since we're renaming the mailbox, instead of overwriting it, it's
+losing its original mode/group.
+
+Searching actions are not reflected back to wily correctly at the moment,
+so B3'ing within any of the reader windows won't work. Instead,
+select some text and B2B1 on Look.
+
+Next and Prev don't change the highlighting of the selected article in
+the list window. I couldn't get wily to do this without warping the cursor
+to the new highlighting, and that's *really* irritating, so I opted for
+the more comfortable, broken approach.
+
+Wily doesn't maintain the edit history when the window is owned by
+a client.
+
+NEWS READER USAGE
+Started with "nreader". This is an NNTP-only reader, I'm afraid. Those
+of you with local spool disks and no NNTP reader will have to hash up
+some scripts to browse the spool directory. It uses $NNTPSERVER to
+determine the server host name, and by default this is "news".
+
+I rely on the server supporting the XHDR extension. Innd does, and
+so does the "reference" implementation.
+
+The reader currently uses .testnewsrc, rather than .newsrc, because
+you might not want to blow away your news readership just because
+you want to try out some new software.
+
+The reader doesn't add or remove groups, or handle subscribing, etc.
+It just updates which articles you've read.
+
+The reader gives some feedback as it first queries the server for new
+article counts, and then displays a list of groups and articles. B3'ing
+on a group displays a list of articles, just like in the mail reader. B3'ing
+on an article's subject line brings up the article. Window control is
+mostly the same, except:
+
+	- next/prev will walk off the end of one group, and onto the next.
+	In addition to updating the article displayed in the current window,
+	it also updates the list of articles in the group window. If you've
+	got more than one list window open on the group, it might update
+	the wrong one. Sorry.
+
+	- catchup marks all articles in the group as read, and then moves
+	to the next group. Closes all displayed-article windows for that
+	group too.
+
+	- There are followup and follrep commands as well as reply,
+	and there's a post command instead of "comp". Behaviour
+	is basically obvious, and follrep posts a followup and emails
+	a reply at the same time.
+
+	- there are markread and markunread commands, if this is
+	important to you.
+
+	- quit updates your .testnewsrc, but exit doesn't. It doesn't
+	checkpoint the .testnewsrc at any point, right now.
+
+Configuration
+	You can change the From display stuff, in headers.h. There isn't
+	a list of restricted headers here, though. news.h needs your
+	mailer defining again.
+
+	FROMENV is the name of the environment variable which contains
+	your full, real, email address. This is a bit of an abuse hole, but I
+	can't be bothered to work out what it should be (it's a real pain getting
+	*mine* from my surroundings...).
+
+	LOADDISP is handy for feedback. If you've got an enormous amount
+	of groups to check, this helps you stop panicking. If non-zero, then
+	for every LOADDISP groups the server is queried about, the group's
+	name is displayed in the main window. (note: unsubscribed groups are
+	ignored in this count).
+
+Bugs
+	Well, I've only just started using the newsreader, so it's bound to
+	be bad.
+
+	Really needs killfile support.
+
+	Doesn't understand cross-posting concepts at all, so you read the same
+	article twice. Sorry.
+
+	I've managed to kill wily with "estart failed" at one point - probably out
+	of fds...
+
+	If you open article x, hit next a few times, and then reply, followup, etc,
+	if you do "inc", you get article x, not the one you want to reply to.

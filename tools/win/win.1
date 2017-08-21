@@ -1,0 +1,178 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) win %R%.%L% of %D%
+.TH win 1 "%R%.%L% of %D%"
+.SH NAME
+win \- Terminal emulator
+.SH SYNOPSIS
+.B win
+.RB [ \-v ]
+.RB [ -t
+.IB name ]
+.RI [ command
+.RI [ argument
+.IR ... ]] 
+.I address
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I win
+prints its version number and date and exits.
+.TP
+.BI \-t name
+If the
+.B \-t
+option is present, win uses
+.I +name
+as the final part of the tag name of its window.
+.SH DESCRIPTION
+.I win
+must be able to connect to a running 
+.IR wily (1).
+.I win
+attaches to a window.
+If the
+.B \-t
+option is present, the final part of the tag name
+is
+.IR name .
+If
+.I command
+is present, the final part of the tag name is
+.IR +command .
+Otherwise, the final part of the tag name is
+.IR +win .
+The first part of the tag name is the current working
+directory.
+.PP
+win runs a program in a child process.
+The child process is the leader of a process group
+and is connected to
+.I win 
+by a pseudo-terminal.
+If
+.I command
+is specified, the
+child process runs
+.Ds
+$SHELL -c 'command argument ...'
+.De
+otherwise it runs
+.Ds        
+$SHELL -i
+.De    
+If SHELL is not found in the environment, 
+.I /bin/sh
+is used.
+.PP
+TERM=win is placed in the environment of the running program.
+.PP        
+Output from the running command appears in the window.
+The point after the last output from the running command is known
+as the output point.
+Further output from the running command appears just before the output point.
+The output point is initially at the end of the window.
+.PP    
+Normal wily editing commands work in the window.
+When a newline, interrupt character, or end-of-file character 
+is created after the output point,
+the text between the output point and the last newline,
+interrupt character, or end-of-file character in the window 
+(inclusive) is passed to the running program as input.
+.PP
+The interrupt character is control-C and the end-of-file character
+is control-D.
+The pseudo-terminal initially is configured so that these are
+recognized with their normal meanings.
+.PP
+The B2 commands beginning with the |, <, or > characters
+or an upper case letter are executed normally by wily.
+Other B2 are first
+terminated with a newline, if they are not already, and are
+then appended to the buffer (and thereafter passed to the
+running program).
+.SH RETURNS
+.I win
+returns zero if it is able to successfully create the 
+child process, otherwise it returns
+non-zero.
+.SH EXAMPLES
+Run a terminal emulator within wily
+.Ds
+win
+.De
+.PP
+Run FTP within wily
+.Ds
+win ftp
+.De
+.PP
+Run rlogin within wily
+.Ds
+win -t host.domain rlogin -8 host.domain
+.De
+.SH SEE ALSO
+.IR wily (1)
+.IR Tag (1)
+.IR Man (1)
+.SH BUGS
+.I win
+doesn't follow changes to the terminal attributes.
+In particular, there is no way to stop echoing
+or to change its concept of the interrupt and 
+eof characters.
+.PP
+.I rlogin
+seems to need -8 and, annoyingly, sets echo
+and onlcr.
+The latter can be fixed in your .rcrc:
+.Ds
+if ( ~ $TERM win ) {
+    stty -echo -onlcr
+}
+.De
+.PP
+.I win
+doesn't follow changes to the terminal attributes.
+In particular, there is no way to stop echoing
+or to change its concept of the interrupt and 
+eof characters.
+.PP
+WEdestroy messages aren't yet passed by wily.
+Thus, Del and Delcol can delete the window yet leave
+win running.
+.PP		
+There is a race condition; the user can press newline and
+then delete text before win has a chance to read it.
+.SH AUTHOR
+.I win
+was originally written by Gary Capell (gary@cs.su.oz.au).
+Alan Watson (alan@oldp.nmsu.edu) rewrote it and added
+support for arguments, pseudo-terminals instead of pipes,
+and execution of certain B2 commands by wily.
+The pseudo-terminal support in 9term, written by
+Matty Farrow (matty@cs.su.oz.au), was a great help.

@@ -1,0 +1,171 @@
+.de F
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de L
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de FR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de LR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de CW
+.ft B
+..
+.\" This is gross but it avoids relying on internal implementation details
+.\" of the -man macros.
+.de TF
+.IP "" \w'\fB\\$1\ \ \fP'u
+.PD0
+..
+.de EX
+.CW
+.nf
+..
+.de EE
+.fi
+..
+.\" delete above this point if your system has F, L, FR, LR, CW and TF macros
+.TH BALLOC 3G
+.SH NAME
+balloc, bfree, rdbitmap, wrbitmap, rdbitmapfile, wrbitmapfile \- allocating, freeing, reading, writing bitmaps
+.SH SYNOPSIS
+.nf
+.PP
+.B
+#include <libc.h>
+.B
+#include <libg.h>
+.PP
+.ta \w'\fLBitmap 'u
+.B
+Bitmap	*balloc(Rectangle r, int ldepth)
+.PP
+.B
+void	bfree(Bitmap *b)
+.PP
+.B
+void	rdbitmap(Bitmap *b, int miny, int maxy, uchar *data)
+.PP
+.B
+void	wrbitmap(Bitmap *b, int miny, int maxy, uchar *data)
+.PP
+.B
+Bitmap	*rdbitmapfile(int fd)
+.PP
+.B
+void	wrbitmapfile(int fd, Bitmap *b)
+.SH DESCRIPTION
+A new bitmap is allocated with
+.BR balloc ;
+it will have the extent and depth given by its arguments,
+and will be filled with zeros. The
+.I id
+field contains the handle of the X
+.B Pixmap
+associated with the bitmap
+and the
+.I cache
+field is zero.
+.I Balloc
+returns 0 if the server has run out of bitmap resources.
+.B Bfree
+frees the resources used by its argument bitmap.
+.PP
+The remaining functions deal with moving groups of pixel
+values between bitmaps and user space or external files.
+There is a fixed format for the bitmap data in user space or on
+external files.
+A pixel with x-coordinate =
+.I x
+in a bitmap with
+.B ldepth
+=
+.I l
+will appear as
+.if t \fIw\fP = 2\u\s8\fIl\fP\s10\d
+.if n w = 2^l
+contiguous bits in a byte, with the pixel's high order bit
+starting at the byte's bit number
+.if t \fIw\fP\(mu(\fIx\fP mod 8/\fIw\fP),
+.if n w*(x mod 8/w),
+where bits within a byte are numbered 0 to 7 from the
+high order to the low order bit.
+If
+.I w
+is greater than 8, it is a multiple of 8, so
+pixel values take up an integral number of bytes.
+A
+.I row
+of bitmap
+.I b
+consists of the byte containing pixel
+.IB b .r.min.x
+and all the bytes up to and including the byte containing pixel
+.IB b .r.max.x\fR\(mi1.
+.PP
+.I Rdbitmap
+reads rows of pixels from bitmap
+.I b
+into
+.IR data .
+The rows read have
+.IR y = ymin , ymin "+1, ... "
+.IR ymax \(mi1.
+Those rows must be within the range allowed by
+.IB b .r.
+.PP
+.B Wrbitmap
+replaces the specified rows of pixels in bitmap
+.I b
+with
+.IR data .
+.PP
+.I Rdbitmapfile
+creates a bitmap from data contained an external file;
+.I fd
+should be a file descriptor obtained by opening such a file for reading.
+The external file should start with 5 ASCII integers:
+.BR ldepth ,
+.BR r.min.x ,
+.BR r.min.y ,
+.BR r.max.x ,
+and
+.BR r.max.y .
+Each number is right-justified in 11 characters, followed by a blank.
+The rows of bitmap data, formatted as described above,
+follow the header.
+The returned bitmap is allocated using
+.I balloc .
+.I Rdbitmapfile
+returns 0 if the server has run out of bitmap resources.
+.PP
+.I Wrbitmapfile
+writes bitmap
+.I b
+onto file descriptor
+.IR fd ,
+which should be open for writing.
+The format is as just described for
+.IR rdbitmapfile .
+.PP
+.I Rdbitmapfile
+and
+.I wrbitmapfile
+don't close
+.IR fd .
+.PP
+.SH DIAGNOSTICS
+Some errors can occur when accessing the internal bitmaps,
+when trying to malloc, or when trying to read or write the
+argument file descriptors;
+the graphics error function (see
+.IR graphics (3))
+is called when this happens.
+.SH "SEE ALSO"
+.IR bitmap (6),
+.IR graphics (3),
+.IR bitblt (3).

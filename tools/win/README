@@ -1,0 +1,24 @@
+This is a collection of tools for wily. It should be unpacked in the
+base wily directory (i.e., in the same directory as libmsg). It
+includes a pseudo-terminal based terminal emulator, commands to search
+for and replace text, a manual page interface, and a tags interface.
+
+See INSTALL for instructions on compiling and installing.
+
+Please send bug reports to the author at alan@oldp.nmsu.edu.
+
+Copyright (c) 1996 by Alan Watson (alan@oldp.nmsu.edu). Written by
+Alan Watson. Not derived from licensed software.
+
+Permission is granted to anyone to use this software for any purpose
+on any computer system, and to redistribute it freely, subject to the
+following restrictions:
+
+1. The author is not responsible for the consequences of use of this
+software, no matter how awful, even if they arise from defects in it.
+
+2. The origin of this software must not be misrepresented, either by
+explicit claim or by omission.
+
+3. Altered versions must be plainly marked as such, and must not be
+misrepresented as being the original software.

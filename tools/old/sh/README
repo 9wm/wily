@@ -1,0 +1,10 @@
+wcmd prog [args]
+	connect to wily, set $WILYFD to be the file descriptor,
+	then run 'prog'
+
+rpc type [args]
+	packs its arguments up in the wily message format
+	(currently headed by a length field, and separated by nulls)
+	and sends the message out on WILYFD, waits for the
+	response (printing and discarding events), and
+	prints the response on stdout.

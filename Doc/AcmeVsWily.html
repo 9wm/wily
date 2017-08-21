@@ -1,0 +1,66 @@
+<HTML><HEAD><TITLE>Acme Vs. Wily</TITLE></HEAD>
+<BODY><H1>Acme Vs. <A HREF="index.html">Wily</A></H1>
+
+The following is a side-by-side comparison of Acme under Plan 9 vs. Wily
+under Unix.
+See <A HREF="http://www.cs.su.oz.au/~gary/wily/">http://www.cs.su.oz.au/~gary/wily/</A>
+for more docs.
+
+<P>Wily extensions and differences include:
+
+<UL>
+<LI> sam-like command redirections: &lt;, &gt;, | - operate on the current selection
+<LI> you can export rc functions and variables to wily
+<LI> no confirmations - automatic backup of dirty files
+<LI> no warnings when using New to create a new file
+<LI> black (dirty) resize box is more visible in wily
+<LI> long-running processes can open a socket to wily
+<LI> HISTORY mechanism
+<LI> Indent, Dotfiles, Clear and Anchor builtins
+<LI> Exit in acme is called Quit in wily
+<LI> Zerox in acme is called Split in wily
+<LI> acme executes a B2B1 command in the context of the command whereas
+  wily does it in the context of the argument
+<LI> acme selects B2 output
+<LI> window tags scroll horizontally
+<LI> contracting labels using environment variables. For example, if a window
+  represents <TT>/u13/pgrad/gary/src/</TT>, on the screen it will show up as <TT>$h/src/</TT>
+  if you set <TT>h=/usr/pgrad/gary</TT>
+<LI> if you hit Return <I>immediately</I> after selecting some tag text with the
+  Escape key, it acts as if you'd clicked it with button 2, so typing
+  'echo fish', Escape, Return executes that command.
+<LI> each line in <TT>$WILYTOOLS</TT> or <TT>$HOME/.wilytools</TT> can contain either a comment
+  (starts with whitespace or '#') or a regexp, then a tab, then some tools
+  (i.e. some text) which will be appended into the tag of any window whose
+  label matches the regexp.  The <I>first</I> regexp match wins.
+<LI> editing the label of a window does "the right thing" if you then B2 on Get
+<LI> you can set the wily file, directory, column and main tags, via <TT>$WFILETAG</TT>,
+  <TT>$WDIRTAG</TT>, <TT>$WCOLTAG</TT> and <TT>$WMAINTAG</TT>
+</UL>
+
+Wily does not have the following Acme capabilities:
+
+<UL>
+<LI> the Font builtin should be able to take an argument - this can be fixed
+<LI> Dump/Load not implemented yet (could be done by an external program)
+<LI> acme makes the right column skinnier - good for guide files
+<LI> there is no equivalent to <TT>/mnt/acme</TT>
+<LI> ID, Incl, Local, Send, Sort not implemented
+</UL>
+
+A striking similarity :-)
+
+<UL>
+<LI> the View will scroll (with lots of ugly flicker) while selecting,
+  to allow you to select an area larger than the View.
+</UL>
+<HR>
+Thanks to &lt;<A HREF="mailto:Gerry.Tomlinson@newcastle.ac.uk">Gerry.Tomlinson@newcastle.ac.uk</A>&gt;
+ and
+&lt;<A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>&gt; for their comments.
+
+<BR>
+<B>Steve Kotsopoulos</B> &lt;<A HREF="mailto:steve@border.com">steve@border.com</A>&gt; - Nov 11, 1996
+</BODY>
+</HTML>
+

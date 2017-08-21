@@ -1,0 +1,64 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) Man %R%.%L% of %D%
+.TH Man 1 "%R%.%L% of %D%"
+.SH NAME
+Man \- Displays reference pages
+.SH SYNOPSIS
+.B Man
+.RB [ \-v ]
+.I title ...
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I Man
+prints its version number and date and exits.
+.PP
+Any
+.IR man (1)
+options are allowed.
+.SH DESCRIPTION
+.I Man
+must be able to connect to a running 
+.I wily (1).
+.PP
+Man executes a
+.I man (1)
+command with the specified options and titles
+and displays the result in a window.
+The name of the window is
+.IR "+Man\ title" ,
+where title is the last title specified.
+.SH EXAMPLES
+Display the man page for make
+.DS
+Man make
+.De
+.SH SEE ALSO
+.IR wily (1),
+.SH AUTHOR
+Alan Watson (alan@oldp.nmsu.edu)

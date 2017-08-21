@@ -1,0 +1,59 @@
+<HTML><HEAD><TITLE>Hacking Wily</TITLE></HEAD>
+<BODY>
+<H1>note</H1>
+This document is pretty scrappy, and will likely remain so
+for some time.  You're best bet is to use the documentation
+in the source files themselves.
+
+<H1>Hacking <A HREF="index.html">Wily</A></H1>
+
+<H2>Main data structures</H2>
+<H3>Text</H3>
+
+
+The text buffer data structure.  All file and text manipulation happens
+through a text buffer.  Every text buffer has a pointer to a list of
+<TT>View</TT>s which look after the screen.  <TT>Text</TT>s
+belonging to a window have a pointer to the corresponding
+<TT>Data</TT>, with <TT>t-&gt;isbody</TT> indicating whether
+the text is for the tag or body.
+
+<P>The text also maintains a small cache used in searching through
+the buffer.
+
+<P>Files which <TT>#include "text.h"</TT>:
+<DL>
+<DT><TT>text.c</TT><DD>
+This (discounting <TT>text.h</TT>) is the only file that knows how
+a text buffer is organised in memory (a simple buffer gap,
+but keep that to yourself :-).  It contains the basic routines
+to read and write a text buffer to/from memory or a file.
+<DT><TT>undo.c</TT><DD>
+Responsible for maintaining the undo log.
+<DT><TT>sam.h, sambuf.c</TT><DD>
+Wrappers to make a <TT>Text</TT> behave like
+a Sam file, so we can use the Sam regexp code.  They provide
+a small buffer and some macros for quickly traversing the
+Runes of the buffer. 
+<DT><TT>click.c</TT><DD>
+Code to expand double-clicks etc.   Uses the interface provided
+by <TT>sambuf.c</TT>
+<DT><TT>search.c</TT><DD>
+Various routines to search through a Text
+<DT><TT>text2.c</TT><DD>
+Mostly convenience wrappers around the functionality of <TT>text.c</TT>,
+plus routines for formatting directories.
+</DL>
+
+<H3>Data</H3>
+
+<H3>View</H3>
+<H3>Tile</H3>
+<H2>Main needs</H2>
+Flicker-free scrolling, Tile heuristics, Sam commands
+
+
+<HR><A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>
+
+</BODY>
+</HTML>

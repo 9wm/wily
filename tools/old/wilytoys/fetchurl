@@ -1,0 +1,23 @@
+#!/usr/local/bin/expect -f
+# Download an HTML file in a simplistic fashion.
+# Usage: fetchurl hostname filename
+# (parse the URL yourself...)
+
+set hostname [lindex $argv 0]
+set filename [lindex $argv 1]
+
+log_user 0
+spawn telnet $hostname http
+expect {
+	"Connected" {
+		expect "Escape character is '^]'."
+		send "GET $filename\n"
+		expect "GET $filename\r\n"
+		log_user 1
+		interact  -o "\r" {} "Connection closed by foreign host." {}
+		exit 0
+	} timeout {
+		send_user "Could not connect to $hostname\n"
+		exit 1
+	}
+}

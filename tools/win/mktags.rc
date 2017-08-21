@@ -1,0 +1,71 @@
+if ( ~ $#* 0 ) {
+	echo >[1=2] 'usage: mktags [-v] file ...'
+	exit 1
+}
+
+if ( ~ $1 -v ) {
+	# @(#) mktags %R%.%L% of %D%
+	echo mktags %R%.%L% of %D%
+	exit 0
+}
+
+tab = '	'
+
+nawk >Tags '
+	
+	BEGIN {
+		status = 0;
+	}
+	END {
+		exit(status);
+	}
+	
+	function error(msg)
+	{
+		system("echo 1>&2 " msg);
+	}
+	
+	function checkname(name)
+	{
+		if (file[name] != "") {
+			error(sprintf("mktags: %s is defined in %s and %s", name, file[name], FILENAME));
+			status = 1;
+		}
+		file[name] = FILENAME;
+	}
+		
+	/^[a-zA-Z_][a-zA-Z_0-9]*\(/ {
+	
+		name = $0;
+		sub("\\(.*", "", name);
+		
+		ere = $0;
+		sub("\\(.*", "\\(", ere);
+		sub("^", "^", ere);
+		
+		checkname(name);
+		
+		printf("%s %s:/%s/\n", name, FILENAME, ere);
+		next;
+		
+	}
+	
+	/^#[ 	]*define[ 	][ 	]*[a-zA-Z_][a-zA-Z_0-9]*\(/ {
+	
+		name = $0;
+		sub("#[ 	]*define[ 	][ 	]*", "", name);
+		sub("\\(.*", "", name);
+		
+		ere = $0;
+		sub("\\(.*", "\\(", ere);
+		sub("^", "^", ere);
+		
+		checkname(name);
+		
+		printf("%s %s:/%s/\n", name, FILENAME, ere);
+		next;
+	}
+	
+' $*
+
+exit

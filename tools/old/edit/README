@@ -1,0 +1,33 @@
+This is far from complete, but I've had so little time to work on it
+this week, and wily's had so many releases, that I thought I may as
+well give others a chance to play with it. Besides, I was getting fed up
+with applying that patch to text.c.
+
+This includes regexp.c, but again, it's unchanged from the original.
+The sam.[ch] here are different from those in wily itself.
+
+This works on my machine with the pipeline:
+
+e file | x /regexp/ | c word | q
+
+but I haven't played with many combinations yet. As long as the
+text.c patch goes in, then it will be easier to test it, rather than
+trying to keep up with wily revisions. Couple of major points:
+
+- e asks wily for "." by default, if no address is given. During the
+resolution of this, wily attempts to open "/path/." where e has
+asked for "." in /path/name. This is kind of weird, and is part of
+the context rules. I'm not sure what to do about it.
+
+- "q" isn't really necessary, if we take acme's stance, and say that
+you can only have one of c,i,a,d in the pipeline. Seems a little mean
+to me, since they don't supply s. I've tried to arrange things so that
+you can pipe c,i,d,a into each other, but that's not working yet. Or
+we could just give up (combinations of i and a are ok, c and d don't
+make a lot of sense in combination), add s, and dump q. Which will
+probably for the best anyway.
+
+- I haven't done anything about arranging things so that Wily allows
+Undoing, yet. Haven't even looked into it.
+
+Steve

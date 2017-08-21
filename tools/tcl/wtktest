@@ -1,0 +1,15 @@
+#!wtk
+#
+#	$Header: /u/cvs/wtcl/wtktest,v 1.1 1996/11/12 23:34:01 cvs Exp $
+#
+wily init
+proc cmd {name} {
+	set id [lindex [wily list] 0]
+	wily exec $id $name
+}
+	
+button	.quit -text Quit -command {cmd Quit}
+button .putall -text Putall -command {cmd Putall}
+button .font -text Font -command {cmd Font }
+
+pack .quit .putall .font -side left

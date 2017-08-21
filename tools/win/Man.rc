@@ -1,0 +1,15 @@
+if ( ! ~ $#* 1 ) {
+	echo >[1=2] 'usage: Man [-v] [options] title ...'
+	exit 1
+}
+
+if ( ~ $1 -v ) {
+	# @(#) Man %R%.%L% of %D%
+	echo Man %R%.%L% of %D%
+	exit 0
+}
+
+name = `{ echo $*($#*) }
+man $* >[2=1] | col -bx | wreplace -c '+Man '^$name^':,'
+
+exit

@@ -1,0 +1,27 @@
+Begin3
+Title:          Wily - a simple, powerful, mouse-based text environment
+Version:        0.13.23 [November 1996]
+Entered-date:   November 1996
+Description:    Interact in a general way with text on the screen using a mouse.
+		Instead of menus or control keys, clicking on text with the
+		middle mouse button executes it, clicking on text with the
+		right mouse button "goes to" a file, directory, string or
+		regular expression.  
+		Wily was written by programmers for programmers: there
+		are very few rules and almost no exceptions.
+		The learning curve is steep but short,
+		and very few people have used wily for a few hours and
+		gone back to another editor.
+		Wily is an emulation for Unix and X of Acme which only
+		works in the Plan 9 environment.  Acme was inspired chiefly
+		by Oberon.
+Keywords:       text-editor window-manager integrated-development-environment
+Author:         gary@cs.su.oz.au
+Maintained-by:  gary@cs.su.oz.au
+Primary-site:   ftp.cs.su.oz.au /gary/wily/
+                312k wily.tgz
+Alternate-site: ftp.northsea.com /pub/plan9_unix/wily/
+Original-site:  
+Platform:       UNIX
+Copying-policy: Artistic
+End

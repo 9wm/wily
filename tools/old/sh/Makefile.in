@@ -1,0 +1,21 @@
+srcdir=@srcdir@
+VPATH=@srcdir@
+OBJECTS= wcmd.o rpc.o
+TARGETS=wcmd rpc
+CC=@CC@
+RANLIB=@RANLIB@
+CFLAGS=@CFLAGS@ -I../include -I.. -I$(srcdir)/../include @X_CFLAGS@
+MYLIBS=../libmsg/libmsg.a ../libXg/libXg.a
+all: $(TARGETS)
+$(TARGETS): $(MYLIBS)
+wcmd:	wcmd.o
+	$(CC) $(LDFLAGS) -o wcmd wcmd.o $(MYLIBS) $(LIBS) @X_EXTRA_LIBS@
+rpc:	rpc.o
+	$(CC) $(LDFLAGS) -o rpc	rpc.o $(MYLIBS) $(LIBS) @X_EXTRA_LIBS@
+$(OBJECTS): ../include/libmsg.h
+clean:
+	rm -f *.o core *pure*
+nuke: clean
+	rm -f $(TARGETS)
+install:	$(TARGET)
+	cp $(TARGET) ../$(TARGET).$(SYS)

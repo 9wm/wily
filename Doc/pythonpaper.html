@@ -1,0 +1,504 @@
+<HTML><HEAD><TITLE>
+Wily + Python &gt; Emacs + Lisp?
+</TITLE></HEAD>
+<BODY>
+<H1>DRAFT ONLY</H1>
+
+<P>This is a draft of a document which will be submitted to the <A
+HREF="http://www.python.org/workshops/1996-06/"> 4th International
+Python Conference</A> to be held at June 4-6, 1996 at the Lawrence
+Livermore labs in California.
+<P>This document describes aspects of Wily which are not yet released for beta
+testing.
+
+<H1>Wily + Python &gt; Emacs + Lisp?</H1>
+<ADDRESS>
+<A HREF="http://www.cs.su.oz.au/~gary">Gary Capell</A>
+&lt;<A HREF="mailto:gary@cs.su.oz.au"><TT>gary@cs.su.oz.au</TT></A>&gt;
+<BR><A HREF="http://www.cs.su.oz.au/">Basser Department of Computer Science,</A>
+<BR><A HREF="http://www.usyd.edu.au/">University of Sydney</A>, 2006
+<BR>Australia
+<BR>
+</ADDRESS>
+
+<BLOCKQUOTE>
+Wily is an editing environment which can be extended with Python 
+programs. Instead of using an embedded Python interpreter, Wily talks
+a simple message protocol, and a module lets Python speak the same
+protocol.  This approach is general (one can use any language)
+and clean (the editor is responsible for only a small set of functions).
+The message interface promotes a clear separation of functions, with the
+Wily editing environment providing a standard way of interacting with
+client programs.  The main disadvantage may be that the looser binding
+between programming language and editor is less efficient, but this is
+not expected to be a significant problem.
+
+<P>The editor itself is simple, clean, and efficient, with a few features
+which combine consistently.  It abandons backwards compatibility with
+the virtual terminals of yesteryear, to take full advantage of a bitmapped
+terminal and three button mouse.
+</BLOCKQUOTE>
+
+<H2>Table of Contents</H2>
+
+<P>This documet describes:
+<UL>
+<LI>(very briefly) <A HREF="#overview">the Wily editing environment</A>
+<LI><A HREF="#protocol">Wily's message protocol</A>
+<LI><A HREF="#module">the Python module</A> which translates a Wily
+message stream
+<LI> some <A HREF="#tools">sample tools</A> written using this
+combination.
+<LI>some <A HREF="#alternatives">alternative approaches</A> to
+connecting an editor and a programming language
+<LI><A HREF="#todo">further work</A> to be done on Wily.
+<LI>How to <A HREF="#obtain">download Wily</A>.
+<LI><A HREF="#ack">Acknowledgements</A>.
+</UL>
+
+<P>An appendix defines the Python interface in 
+<A HREF="#appendix">more detail.</A>
+
+
+<H2><A NAME="overview">Overview of Wily</A></H2>
+
+<P>This is necessarily very brief, and Wily and Acme are very different
+from what most people are used to.  Please read
+<A HREF="http://plan9.bell-labs.com/plan9/doc/acme.html">Rob Pike's paper</A>
+for a better and more complete description of the interface.
+
+<P>Wily's main attractions are that it is very simple (the User Manual
+describing the whole user interface is about seven pages), very quick to
+use, and integrates well with other Unix tools.
+
+	<H3>History</H3>
+
+<P>Wily emulates in the Unix and X Windows environment the <A
+HREF="http://plan9.bell-labs.com/plan9/doc/acme.html">Acme</A> editor
+from <A HREF="http://plan9.bell-labs.com/plan9/">Plan 9</A>.
+Acme couldn't easily be ported to Unix because it is written
+in <A HREF="http://plan9.bell-labs.com/plan9/doc/ref.html">Alef</A>
+(a concurrent programming language not widely available) and uses
+non-portable features of Plan 9 . Also, a port of Acme would not be
+freely distributable.
+
+<P>The name ``Wily'' derives from Wile E. Coyote, an avid consumer of
+Acme products.
+
+	<H3>Modern Aesthetics</H3>
+
+<IMG SRC="http://www.cs.su.oz.au/~gary/wily/p2.gif"
+ALT="Wily windows, Unicode text propotionally spaced"
+width=798 height=264>
+
+<P>The screen is divided into columns, which are divided into windows.
+A window may represent a file, a directory, or the output from some
+program.  The screen, columns and windows each have a narrow horizontal
+``tag'' at the top, which contains some useful text, and for windows
+contains the name of the window and a "file is modified" indicator.
+
+<P>Text is displayed in a propotionally spaced font by default. There
+is a built in function to toggle with a monospace font, but there are
+very few occasions when this is necessary or desirable.  In most cases
+limiting a text editor to monospace fonts is blindly following the
+hardware limitations of the 1960s.
+
+<P>Text is read and written as UTF8-encoded
+<A HREF="http://plan9.bell-labs.com/plan9/doc/utf.html">Unicode</A>,
+providing some support for editing multi-lingual and scientific text,
+but remaining backwardly compatible with plain 7-bit ASCII text.
+
+	<H3>Everything is text</H3>
+
+<P>All actions in Wily are through creating and interacting with text on
+the screen, using the three-button mouse and the keyboard. B1 (mouse button
+one) selects text, B2 executes text and B3 attempts to ``goto'' the text.
+
+<P>When executing text, there are some built in operations, such as
+``Quit'', or ``Del'' which are executed by Wily itself. Otherwise, the
+command is executed in a subprocess, with output redirected to a window
+within Wily and input from <CODE>/dev/null</CODE>. It is also possible
+to use the current selection (currently selected text) as input for
+and/or output of some child program.  For example <CODE>|fmt</CODE>
+formats the current selection, <CODE>&gt;spell</CODE> checks its
+spelling and <CODE>&lt;date</CODE> replaces it with the current time.
+
+<P>The <em>goto</em> operation used with B3 is polymorphic in that it
+recognises three different patterns:
+<DL>
+<DT><TT>name</TT>
+	<DD>If <TT>name</TT> is a file or directory, open it, otherwise search
+	for the literal <TT>name</TT>
+<DT><TT>:address</TT>
+	<DD>Search for <TT>address</TT> in the current window.  The
+	address may be a line number, a character number, a regular expression,
+	or two of these, separated by a comma.
+<DT><TT>file:address</TT>
+	<DD>Open <TT>file</TT> and search in it for <TT>address</TT>
+</DL>
+
+<P>Wily's power derives in part from its general treatment of text.
+Whether text is found in a file, or directory listing, created by
+Wily, output by some other program, or typed by the user, it can all
+be treated the same way.  A simple text file may be used as a menu of
+commands or a simple form of hypertext.  Previously typed commands or
+``usage'' messages can be edited and executed.  There is no need for
+dialogs, menus, modes, buttons or accelerator keys, just operations on
+text on the screen.
+
+	<H3>No wasted user actions</H3>
+
+<P>Wily minimizes the number of unnecessary mouse or keyboard
+actions the user must make. For instance, placing newly created windows
+is done without needing the user's help, although the user can easily
+rearrange things if Wily's heuristics aren't acceptable. Wily also makes
+cutting, pasting, executing and searching for text so easy to do with
+the mouse that there is no need to retype text already on the screen.
+
+<P>Cutting and pasting text is made particularly convenient using
+<EM>combinations</EM> of mouse buttons. To cut text, select it with B1,
+and while still holding B1, also click B2: this is a B1-B2 chord.
+To paste text use a B1-B3 chord.  This style is unusual, but once it becomes
+familiar other methods of cutting and pasting seem unbearably slow.
+Another chord (B2-B1) is used to execute some text with
+an argument.
+
+<P>To avoid having to position the mouse accurately, a mouse selection of
+zero length (i.e. a mouse click) is expanded in a ``reasonable'' manner.
+Clicking with B2 in a word expands to that word, which is then executed.
+Clicking with B3 in an address (e.g. <TT>foo.c:45</TT>) expands to that
+address. Double-clicking with B1 just inside paired braces, brackets or
+quotes selects the region thus delimited.
+
+<P>Wily's general approach to text as commands and addresses
+is compounded because these basic functions can be accessed so
+conveniently.  Most operations can be achieved with a single mouse click
+or mouse combination.
+
+	<H3>Synergy</H3>
+
+<P>The consistent and general use of text for input and output
+in Wily makes the combination of its features more than the
+sum of its parts.
+
+<P>Stepping through an example session might best illustrate this:
+
+<blockquote>
+Susan has fetched the file <TT>frob.tar.Z</TT>. She clicks with B1 in
+the file name, and with B2 in the word <TT>untarz</TT>. The utility
+<TT>untarz</TT> uncompresses and untars the file, verbosely printing
+file names as it goes. She clicks with B3 on one of the file names,
+<TT>INSTALL</TT>, which opens the file. The <TT>INSTALL</TT> file
+suggests that she run <TT>configure</TT> then <TT>make</TT>. She clicks
+B2 in each of these words to run the suggested programs, but there's a
+problem.  The make fails when <TT>gcc</TT> quits with the error message
+<BR><TT>
+keyboard.c:4: strings.h: No such file or directory.
+</TT>
+<BR>She clicks with B3 in the first part of the error message, which
+opens the file and selects the line. On Susan's system there is a
+<TT>string.h</TT> but no <TT>strings.h</TT>. She removes the last
+<TT>s</TT> with a B1-B2 chord. When she modifies the file, Wily sets
+the ``file modified'' indicator, and adds the word ``Save'' to the tag
+for this window. Susan clicks B2 on the word <TT>Save</TT> to write the
+file, clicks B2 on <TT>make</TT> again, and she's done.
+</blockquote>
+
+<P>This whole process uses about ten mouse clicks and no typing.
+
+<H2><A NAME="protocol">Connecting Programs to Wily</A></H2>
+
+<P>Wily waits for a program to connect to it using a socket, and then sends
+and receives messages.  The messages can be RPC requests and replies,
+or ``event'' messages generated by Wily when certain actions happen in
+windows which a remote program has asked to monitor.
+
+<P>The interface is deliberately at a rather high level.  The intent is that Wily
+will take care of of the details of interaction, with other programs providing the
+semantics of executing a command, opening a window or searching for an address.
+This promotes a consistent set of tools and an efficient division of labour, but necessarily
+at the loss of some generality.
+
+<P>The requests allow the remote program to
+<UL>
+<LI> list the windows currently open
+<LI> create a new window with a given name, which may or may not
+	correspond to an existing file or directory
+<LI> ask to be sent some subset of the events which happen in a
+	particular window
+<LI>change the name of a window
+<LI> read the text from some part of a window
+<LI> modify the text in a window
+<LI> act as if some string were selected with B2 or B3 in a window
+	(useful for searching for text, or accessing built in functions)
+</UL>
+
+<P>A program may ask to be notified when events happen in a particular
+window. These events are generated when:
+<UL>
+<LI> text is selected with B2 or B3 (i.e. the user is trying to execute or ``goto''
+	some text)
+<LI> text has been modified
+<LI> the window is destroyed
+</UL>
+
+<P>When a program is being sent B2 or B3 events, Wily doesn't act on them,
+merely sends them on. The program may opt to ``send back'' some events which
+Wily will then act on. Events which modify text, on the
+other hand, are <EM>always</EM> handled by Wily, which then may inform the
+remote program what has happened. In other words, the remote program
+cannot stop the user modifying any piece of text, although it can repair
+the text later if it wishes.
+
+<H2><A NAME="module"> The Python interface</A></H2>
+
+<H3><TT>Wilymodule.c</TT></H3>
+<P>This is a very simple interface between Python 
+and the Wily message protocol.  It establishes a connection,
+provides remote procedure calls and queues events until they are requested.
+
+<P>A <TT>Connection</TT> is initialized with no arguments, and
+represents the connection to Wily.  All the other functions are methods of
+a connection object.
+
+<P>The <TT>Connection</TT> has methods to return a list of windows
+representing all the windows currently open in Wily, to create a new
+window, and to return the next event from Wily.
+Windows are represented as integers, which correspond to window
+identifiers with Wily, and events are represented as tuples.
+
+<P>The <TT>Connection</TT> has a number of methods which provide
+operations on Wily windows.  These operations allow a program, once it
+has an identifier for a window, to change its event mask, its name or
+its ``tools'' (useful text in the window's tag), read or modify some of
+its text, or simulate a B2 or B3 action.
+
+<H3><TT>Wilywin.py</TT></H3>
+<P>This is a small Python module which provides a friendlier
+interface to Wily's functionality.
+
+<P><H2>Example Program Fragment</H2>
+
+<PRE>
+# Create a window called "hello",and fill it with 
+# the text "Hello, world"
+
+import wily
+con = wily.Connection()
+win = con.win("hello")
+con.replace(win, 0,0, "Hello, world\n")
+</PRE>
+
+<H2><A NAME="tools">Sample Tools</A></H2>
+
+<P>These are small tools written as proof of concept, to test and refine
+the message interface, and as templates for other applications.
+
+<H3>News reader</H3>
+
+<P>This uses Python classes for threading, talking NNTP and reading and
+writing <TT>.newsrc</TT> files, and Wily for displaying newsgroups and
+articles. The program acts on B3 actions on article numbers, and B2
+actions on some special function names (e.g. Catch-up, Follow-up) which
+it also places in the correct tags.
+
+<H3>Session save and restore</H3>
+
+<P>There are two programs to save and restore the ``state'' of an editing
+session. The ``save'' program determines from Wily what windows are
+open, what the current selection is for each, and the full text of
+windows which don't represent a file or directory. The ``restore''
+program connects to Wily and uses the saved information to create and
+massage windows to hopefully return the session to the original state.
+
+<H3>Terminal</H3>
+There are some useful programs which require the traditional ``prompt
+and read a line of input'' interface. Examples include <TT>gdb</TT>, 
+<TT>/bin/sh</TT> or <TT>/bin/mail</TT>. To use these programs, but from
+within the Wily editing environment, a simple terminal program was
+written, in C. It is called <TT>win</TT>.
+
+<P><TT>Win</TT> provides standard input and output for its client program,
+and creates and monitors a Wily window, maintaining an <EM>input
+point</EM>. When <TT>win</TT> sees a carriage return entered after the input
+point, it sends the text between the input point and the carriage return
+to the client program. Output coming back from the client program is
+inserted just <EM>before</EM> the input point.
+
+<P><TT>Win</TT> does not attempt to provide a pseudo tty or work with any
+programs which attempt to use curses-style screen addressing. However,
+it works fine for programs such as those mentioned above, and was written with
+only 230 lines of commented C.
+
+<H2><A NAME="alternatives">Alternative approaches</A></H2>
+
+<P>Wily's approach to extending the editor is to communicate
+with other processes using a socket or pipe.  Here we examine
+some alternative strategies, and why Wily doesn't use them.
+
+	<H3>Build an interpreter into the editor</H3>
+
+<P>This is by far the most common design for an extensible editor.
+
+<P>There are a few advantages to this approach.
+Letting the extension language share the address space of the editor
+is more efficient than using IPC.  The language can also be tailored
+to provide a close match to the editing requirements.
+
+<P>There are two reasons why this approach was rejected for Wily.
+The first reason is that it restricts users to a single language,
+and it often means designing a new (possibly half-baked) language.
+The second reason is that embedding a language interpreter in the editing
+environment seemed an <EM>unnecessary</EM> step towards monolithism
+and code bloat.
+
+<P>For comparison, below are the sizes of three stripped, dynamically
+linked executables on the author's sun4d Solaris system:
+
+<TABLE>
+<TR><TD ALIGN=right><TT>167264</TT>	<TD ALIGN=left>wily
+<TR><TD ALIGN=right><TT>234272</TT>	<TD ALIGN=left>vi
+<TR><TD ALIGN=right><TT>1873336</TT>	<TD ALIGN=left>xemacs
+</TABLE>
+
+<H3>Link code dynamically</H3>
+
+
+<P>Another approach is to dynamically link extension code with the editor.
+This is more general and more
+efficient than the built in interpreter design. 
+<A HREF="http://www.premia.com/cw.htm">CodeWright</A>&#174;
+from Premia uses this approach in the Microsoft Windows environment.
+
+<P>One problem with this
+approach is that dynamic linking is not standard on all UNIXes. Another
+is that one errant code fragment dynamically linked
+in might damage the integrity of the editor. The result might be lost
+data, or even worse, data quietly modified in some subtle manner.
+
+<P>When this approach becomes ubiquitously available and more secure, it
+will be re-examined.
+
+	<H3>ILU or CORBA</H3>
+
+<P>It would seem that 
+<A HREF="ftp://ftp.parc.xerox.com/pub/ilu/ilu.html">ILU</A>
+and
+<A HREF="http://www.omg.org/corba.htm">CORBA</A>
+both provide a ready-made solution to turn an editor into
+a distributed object server.  However, both seemed too 
+heavy-weight for this simple task.
+
+<H2><A NAME="todo">Further Work</A></H2>
+
+<P>There is a strong belief amongst Wily's users and developers that ``creeping
+featurism'' is evil. Most of the ongoing work will be towards refining
+existing features, and improving the clarity and correctness of the
+code. Retaining the ``look and feel'' of Acme is also an important
+consideration.
+
+<P>There is still room for innovation, though. The message interface
+is still very young, and may change with the demands of application
+writers. The author hopes that the Python community will be able to
+make good use of an editor programmable in Python. Although there is no
+<EM>need</EM> for cursor keys to navigate around Wily, they may be added
+later, although they are a low priority.
+
+	<H3>Networking and security</H3>
+
+<P>Currently programs connect to Wily by writing to a UNIX named pipe.
+Wily's security relies on this pipe being writable only by its owner.
+This means Wily can't accept connections directly from remote machines,
+which would be desirable for some applications. A design which avoids
+this limitation securely and efficiently has not been decided upon.
+
+<H2><A NAME="obtain">Obtaining Wily</A></H2>
+
+<P>Wily is freely available.
+
+<P>The prime source for information about Wily is the WWW page at
+<A HREF="http://www.cs.su.oz.au/~gary/wily/">
+<CODE>http://www.cs.su.oz.au/~gary/wily/</CODE>
+</A>
+The wily
+distribution contains <TT>wilymodule.c</TT>, and can be obtained at
+<A HREF="ftp://ftp.cs.su.oz.au/gary/wily.tgz">
+<CODE>ftp://ftp.cs.su.oz.au/gary/wily.tgz</CODE>
+</A>
+
+<H2><A NAME="ack">Acknowledgements</A></H2>
+
+<P>The early design and source of Wily owe a lot to Bill Trost.
+Wily and this paper have also been
+improved by patches, suggestions and bug reports from
+Assar,
+Davor Cubranic,
+Kyle Dean,
+Stephen Gallimore,
+Mark H. Wilkinson, 
+Bjorn Helgaas, 
+Steve Kilbane,
+Beirne Konarski,
+Bob Krzaczek,
+Alberto Nava,
+Arnold Robbins,
+Rich Salz,
+Scott Schwartz, 
+Chris Siebenmann,
+and Richard Wolff.
+
+<P>Wily builds on the Sam distribution by Rob Pike and Howard
+Trickey, and originally used libtext by James Farrow. James
+Farrow also makes available a set of Unicode fonts for X at
+<A HREF="ftp://ftp.cs.su.oz.au/matty/unicode/"><TT>
+ftp.cs.su.oz.au/matty/unicode/
+</TT></A>
+
+<HR>
+
+<H2><A NAME="appendix">Appendix: The Python/Wily Module</A></H2>
+
+<P><TT>con = wily.Con()</TT>
+
+	<H2>Connection</H2>
+
+<P>Connection objects have no attributes and suport the following methods:
+
+<DL>
+<DT><TT>list()</TT><DD>Returns a list of names and <TT>Win</TT> objects
+representing the windows currently open.
+<DT><TT>win(name)</TT><DD>Return a new window called <TT>name</TT>
+<DT><TT>event() </TT><DD>Return the next <TT>Event</TT>.  Note that this method
+will block until an event is available.
+<DT><TT>eventwouldblock() </TT><DD>Indicates whether calling
+<TT>Connection.event()</TT> would block.
+<DT><TT>returnevent(event) </TT><DD>Send <TT>event</TT> back to Wily, probably
+because we have no use for it.
+</DL>
+
+<P>The following methods of a connection object act on a window.
+
+<DL>
+<DT><TT>attach(id,mask)</TT><DD>Request events for this window.
+<DT><TT>detach(id)</TT><DD>Cancel request for events for this window.
+<DT><TT>setname(id,string)</TT><DD>Set the name of this window.
+<DT><TT>settools(id,string)</TT><DD>Set the toolbar for this window.
+<DT><TT>read(id,from,to)</TT><DD>Read some range from this window, returns a UTF8 string.
+<DT><TT>replace(id,from,to, string)</TT><DD>Replace some range of window with some other text.
+<DT><TT>run(id, command)</TT><DD>Makes wily act as if <TT>command</TT>
+had been selected with B2 in this window.  This can be used to access
+Wily's built in functions.  For example, to delete <TT>w</TT>, call
+<TT>con.run(w_id, "Del")</TT>
+<DT><TT>goto(id,address)</TT><DD>Makes wily act as if <TT>address</TT> had
+been selected with B3 in this window.  Returns a tuple identifying the
+window and position which are the result of the search.
+</DL>
+
+	<H3>Events</H3>
+<P>Events are returned as tuples.  Every event has at least two elements, 
+which are a window identifer, and an event type identifier (which is one of
+<TT>wily.GOTO</TT>, <TT>wily.EXEC</TT>, <TT>wily.REPLACE</TT>
+or <TT>wily.DEL</TT>).  All of these event types except <TT>DEL</TT>
+also have a <TT>from</TT>, <TT>to</TT> and <TT>string</TT> attribute.
+</BODY>
+</HTML>

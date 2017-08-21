@@ -1,0 +1,84 @@
+<HTML><HEAD><TITLE>Tcl Programmers Manual</TITLE></HEAD>
+<BODY><H1><A HREF="index.html">Wily</A> Tcl Programmers Manual</H1>
+<P>this is a package of tools for communicating with wily using the Tcl
+library.  the file wily.c defines a thin veneer round wily's libmsg.
+
+<P>this compiles with  wily-0.13.1[89] with tclversion 7.4.
+
+<P>the files wtcl.c and wtk.c compile against wily.c to give a tclsh alike
+with wily support called wtcl, and a wish alike with wily support called
+wtk.
+
+<P>the only addition to standard tcl/tk is the ``wily'' command.  this has
+several subcommands
+
+<DL>
+<DT>wily init<DD>
+
+	connects to wily.  should be called before any other wily command
+
+<DT>wily isconnected<DD>
+
+	checks that we can still talk to wily.  returns boolean.
+	
+<DT>wily list<DD>
+
+	returns a list of window ids (integers).
+
+<DT>wily name &lt;id&gt;<DD>
+
+	returns the name of the window with given id.
+
+<DT>wily new &lt;filename&gt;<DD>
+
+	opens a new window with given filename.
+
+<DT>wily attach &lt;id&gt;<DD>
+
+	offer to collect events for window with given id.
+	we collect _all_ events.
+
+<DT>wily setname &lt;id&gt; &lt;name&gt;<DD>
+
+	set the name of window with given id to the given new name.
+
+<DT>wily settools &lt;id&gt; &lt;tools&gt;<DD>
+
+	appends the given tools to the tools for window with given id.
+
+<DT>wily read &lt;id&gt; &lt;begin&gt; &lt;end&gt;<DD>
+
+	returns the text between points &lt;begin&gt; and &lt;end&gt; in window &lt;id&gt;.
+
+<DT>wily replace &lt;id&gt; &lt;begin&gt; &lt;end&gt; &lt;text&gt;<DD>
+
+	replaces the text between points &lt;begin&gt; and &lt;end&gt; in window
+	id with <text>.
+
+<DT>wily exec &lt;id&gt; &lt;command&gt;<DD>
+
+	just as if &lt;command&gt; had been b2'd in window &lt;id&gt;.
+
+<DT>wily goto &lt;id&gt; &lt;string&gt; &lt;bool&gt;<DD>
+
+	as if string had been b3'd in windows &lt;id&gt;.  if &lt;bool&gt;
+	is true then we jump to and select the result.
+
+<DT>wily length &lt;id&gt;<DD>
+
+	the length of the text in window &lt;id&gt;
+
+<DT>wily wouldblock<DD>
+
+	return boolean.  true if there is no event in queue.
+	false if there is.
+
+<DT>wily event<DD>
+
+	returns a string describing the event.
+
+<DT>wily bounce<DD>
+
+	return the last event received back to wily.
+</DL>
+<HR><A HREF="mailto:sp106@york.ac.uk">"stephen" sp106@york.ac.uk</A>

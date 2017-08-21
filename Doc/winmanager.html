@@ -1,0 +1,35 @@
+<H2>The Wily Window Manager?</H2>
+
+<P>Window management is probably the biggest open problem with Wily,
+probably because there's no real <I>solution</I>, only heuristics.
+
+<P>The first iteration of Wily creatied a bunch of separate X windows
+and let the window manager handle arranging them.  This seems a more
+modular, tool-based approach.  However, bitter experience showed that
+most existing window managers just don't cut it when you're quickly
+creating and deleting lots of windows.  Acme's window management,was
+much better.
+
+<P>The logical solution then would be to write an X window manager that
+works like the window management in Acme.  However:
+
+<UL>
+<LI>Writing a window manager requires knowing a _lot_ more about X than
+I ever want to know
+
+<LI> Either the wily windows would need to be separate processes,
+communicating probably via some sort of X IPC (more arcane X'ery), or
+libXg would need to be modified to allow multiple windows (O who will
+save me from this plague of X?)
+
+<LI> This sort of window manager would probably _not_ be appropriate
+for managing the other windows normally on the desktop.
+</UL>
+
+<P>So Wily is designed to be run in one big window, and it does its own
+window management within that.  It's a bit of a hack, but probably the
+best solution for the moment.
+
+<P>Still, I hope it shouldn't be too hard to remove the "Wily is managing
+all the windows" assumption from the code if some brave soul solves the
+problems mentioned above.

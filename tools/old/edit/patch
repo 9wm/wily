@@ -1,0 +1,161 @@
+*** text.c.orig	Tue Sep 26 18:34:30 1995
+--- text.c	Tue Sep 26 17:40:49 1995
+***************
+*** 79,93 ****
+  void
+  doread(Text *t, char *addr)
+  {
+! 	ulong	p0,p1;
+  	char		*buf;
+  	int		n;
+  
+  	assert(t && t->xfd  && t->datatype == Tpanetext);
+  
+! 	/* todo - stop cheating */
+! 	p0 = atoi(addr+1);
+! 	p1 = t->length;
+  	n = p1 - p0 +1;
+  	assert(n>0);
+  	buf = salloc(2*n);
+--- 79,99 ----
+  void
+  doread(Text *t, char *addr)
+  {
+! 	ulong	p0,p1, t0, t1;
+  	char		*buf;
+  	int		n;
+  
+  	assert(t && t->xfd  && t->datatype == Tpanetext);
+  
+! 	if (!addr)
+! 		return;
+! 	t0 = t->p0;
+! 	t1 = t->p1;
+! 	/* addr is assumed to *not* have a preceding ":" here */
+! 	if (text_addr2sel(t, addr, &p0, &p1))
+! 		return;
+! 	t->p0 = t0;
+! 	t->p1 = t1;
+  	n = p1 - p0 +1;
+  	assert(n>0);
+  	buf = salloc(2*n);
+***************
+*** 279,285 ****
+  	if (addr[0] == '.' && addr[1] == '\0') {
+  		*pp0 = t->p0;
+  		*pp1 = t->p1;
+! 		return 0;	/* todo - ask bill what should really be returned */
+  	}
+  
+  	n = atoi(addr);
+--- 285,291 ----
+  	if (addr[0] == '.' && addr[1] == '\0') {
+  		*pp0 = t->p0;
+  		*pp1 = t->p1;
+! 		return 1;	/* smk - need to have this recognise '.' */
+  	}
+  
+  	n = atoi(addr);
+***************
+*** 307,332 ****
+  	return 1;
+  }
+  
+! /* PRE: 't' is the body of some pane, 'addr' is some string to search for.
+!  * 'addr' may be null.
+!  * POST: 't' is visible, the next occurrence of 'addr' is highlighted,
+!  * if it exists.
+   */
+! void
+! text_goaddr(Text *t, char *addr)
+  {
+- 	ulong	p0, p1;
+  	char	*addr2;
+! 	Pane	*pane;
+  
+- 	pane = (Pane*)t->data;
+- 	assert(pane_isgood(pane) && pane->text ==t);
+- 
+- 	pane_raise(pane);
+- 
+- 	if(!addr)
+- 		return;
+- 
+  	/*
+  	 * Find the second addr in the pair.  Some complexity here:
+  	 *	(1) If the first addr is a regexp, must first find its end -- but watch
+--- 313,330 ----
+  	return 1;
+  }
+  
+! 
+! /*
+!  * given a Text and a string containing an address, return
+!  * the (p0,p1) that the address defines.
+   */
+! 
+! int
+! text_addr2sel(Text *t, char *addr, ulong *pp0, ulong *pp1)
+  {
+  	char	*addr2;
+! 	ulong p0, p1;
+  
+  	/*
+  	 * Find the second addr in the pair.  Some complexity here:
+  	 *	(1) If the first addr is a regexp, must first find its end -- but watch
+***************
+*** 352,358 ****
+  	if (*addr == '\0')
+  		p0 = 0;
+  	else if (!findend(t, addr, &p0, &p1))
+! 		return;
+  	if (addr2) {
+  		ulong	p2, pjunk;
+  
+--- 350,356 ----
+  	if (*addr == '\0')
+  		p0 = 0;
+  	else if (!findend(t, addr, &p0, &p1))
+! 		return 1;
+  	if (addr2) {
+  		ulong	p2, pjunk;
+  
+***************
+*** 364,371 ****
+--- 362,397 ----
+  				p1 = p2;
+  		}
+  	}
++ 	*pp0 = p0;
++ 	*pp1 = p1;
++ 	return 0;
++ }
++ 
++ /* PRE: 't' is the body of some pane, 'addr' is some string to search for.
++  * 'addr' may be null.
++  * POST: 't' is visible, the next occurrence of 'addr' is highlighted,
++  * if it exists.
++  */
++ void
++ text_goaddr(Text *t, char *addr)
++ {
++ 	ulong	p0, p1;
++ 	char	*addr2;
++ 	Pane	*pane;
++ 
++ 	pane = (Pane*)t->data;
++ 	assert(pane_isgood(pane) && pane->text ==t);
++ 
++ 	pane_raise(pane);
++ 
++ 	if(!addr)
++ 		return;
++ 
++ 	if (text_addr2sel(t, addr, &p0, &p1))
++ 		return;
+  	if (p1 < p0)
+  		return;
++ 	last_selection = t;
+  	textshow(t, p0+1, 1);
+  	texthighlight(t, p0, p1, F&~D);
+  	textwarp(t, (p0+p1)/2);

@@ -1,0 +1,24 @@
+AC_INIT(../../wily/wily.c)
+
+dnl Checks for programs.
+AC_PROG_INSTALL
+AC_PROG_CC
+AC_C_CONST
+AC_PATH_PROGS(RC, rc RC)
+
+dnl Checks for libraries.
+AC_CHECK_LIB(nsl, gethostbyname)
+AC_CHECK_LIB(socket, connect)
+
+dnl Checks for pty stuff
+AC_CHECK_FUNCS(_getpty)
+AC_MSG_CHECKING(for /dev/ptmx)
+if /bin/test -e /dev/ptmx ; then
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_DEV_PTMX)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_CHECK_HEADERS(sys/ptem.h)
+
+AC_OUTPUT(Makefile)

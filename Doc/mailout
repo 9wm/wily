@@ -1,0 +1,14 @@
+~/.wilydirhide, .wilytools
+> If wily checked to see if it needed to reload this file before generating a
+> listing (a simple stat(2) -- a feature .wilytools needs as well), it would
+> substitute for Dotfiles quite nicely.
+
+That's a whole lot of stat-ing going on.  Every time
+a window opens for .wilytools, and every time
+a directory opens for .wilydirhide.
+
+A cheesy hack would be to look at those files when
+we open or write them from inside wily, i.e. check the
+label of the file we write/open to see if it is magic.  strcmp
+should be cheaper than stat
+

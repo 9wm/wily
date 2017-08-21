@@ -1,0 +1,500 @@
+<!doctype linuxdoc system>
+<article>
+<title>Wily User Manual
+<author><htmlurl url="http://www.cs.su.oz.au/~gary/"
+		name="Gary Capell">
+<date>v0.12.7 June 1996
+
+<abstract>
+Use the <em/left/ mouse button to <em/select/ text,
+use the <em/middle/ mouse button to <em/execute/ text,  and
+use the <em/right/ mouse button to <em/goto/ text.
+Use a left/middle mouse button combination to <em/cut/ text,
+use a left/right mouse button combination to <em/paste/ text, and
+use a middle/left mouse button combination to <em/execute/ text with an <em/argument/.
+
+The <em/resize box/ indicates if a file is dirty, and can be
+clicked or dragged with various mouse buttons to resize and reposition
+windows.
+
+<htmlurl url="user.ps" name="A Postscript version of this file is available">
+</abstract>
+
+<toc>
+
+<sect>Invocation, Environment variables
+
+<P><tt/wily [-d] [-v] [-f font] [-F fixedfont] [-t tabsize][file name...]/
+<descrip>
+<tag/-d/
+        Enable debugging output
+
+<tag/-v/
+        Print version number and exit
+
+<tag/-f font/
+        (or X resource <tt/p9font/) set the default
+        proportional font.
+
+<tag/-F font/
+        (or X resource <tt/p9fixed/) set the monospace font.
+
+<tag/-t tabsize/
+        set the maximum width of tabs (as multiple of the
+        width of the character '0') for the proportional font.
+	Defaults to 4.
+
+<tag/-T tabsize/
+        set the maximum width of tabs (as multiple of the
+        width of the character '0') for the monospace font.
+	Defaults to 8.
+
+<tag/file name.../
+        Start wily with the named files and directories
+        open.
+
+</descrip>
+
+<sect1>Environment variables<P>
+
+<descrip>
+<tag/SHELL/
+	External commands are sent to the shell for evaluation.
+<tag/HISTORY/
+	If set, commands are written to this file before execution.
+<tag/WILYBAK/
+	Wily uses <tt/&dollar;WILYBAK/ or <tt>&dollar;HOME/.wilybak</tt>
+	as the directory for backups.
+<tag/WILYFIFO, DISPLAY, TMPDIR/
+	Wily communicates with some other programs using a fifo at
+	a well-known location.
+	
+	<P>The name of the fifo will be <tt/&dollar;WILYFIFO/ 
+	if this variable is set, otherwise it will be 
+	<tt>/tmp/wilyUSER&dollar;DISPLAY</tt>, where USER
+	is calculated from the password file.  If <tt/&dollar;TMPDIR/
+	is defined, it is used instead of <tt>/tmp</tt>.
+
+	<P>Wily also sets <tt/&dollar;WILYFIFO/ so any children
+	it creates will know how to talk to it.
+</descrip>
+<sect>Appearance<P>
+foo
+<sect1>Scrollbars and scrolling<P>
+
+Scrollbars are proportional, i.e. the size and position of the
+scrollbar's "thumb" indicates the size and position of the visible
+portion of the text.
+
+Each of the three mouse buttons does something different when
+clicked in the scrollbar.
+
+The <em/right/ mouse button moves the text next to the mouse pointer
+<em/up/ to the top of the window.
+The <em/left/ mouse button moves the text at the
+top of the window <em/down/ so it is next to the pointer.
+Both of these rules
+have the effect that clicking near the top of the scrollbar causes small
+movements, and clicking near the bottom causes large movements.
+
+The <em/middle/ button moves the visible part of the text to a point in the
+text proportional to how far down the scrollbar the pointer is.
+That is, clicking at the bottom of the scrollbar with button 2 jumps
+to the end of the text, clicking at the top of the scrollbar with button 2
+jumps to the beginning of the text.
+
+All of these movements repeat if the mouse button is held down
+in the scroll bar.
+
+The <em/PageUp/ and <em/PageDown/ keys scroll up or down
+by about half a page.  The <em/Home/ and <em/End/ keys
+scroll to the top or bottom of the file.
+
+<sect1>Context<P>
+
+All text in wily has a <em/context/, which is just the
+name of a directory associated
+with that text.
+
+For text in a window, the context is the name of the window, up to
+and including the last <TT>/</TT>.  So if three windows
+have the names
+<TT>/usr/gary/+Errors</TT>, <TT>/usr/gary/guide</TT>
+and <TT>/usr/gary/</TT>, they will all have the same context:
+<TT>/usr/gary/</TT>.  Note that the context need not be a directory
+which actually exists.
+
+For column tags and the top-level tag, the context is the
+name of the directory where wily was started.
+
+When text is <EM/executed/, wily uses the context of the text
+as the directory in which to run the program.
+
+Output from the
+command will appear in the window <tt>{context}/+Errors</tt>.
+
+When trying to <em/Goto/ some text, the text will be interpreted
+relative to its context.  For example, the text <tt>foo.c:14</tt> in
+a window with context <tt>/usr/gary/src/fish/</tt> will be
+interpreted to mean the address <tt>/usr/gary/src/fish/foo.c:14</tt>
+
+<sect>Mouse actions<P>
+
+<sect1>Double-click<P>
+Double-clicking with the left mouse button can select a word, a line,
+or the text delimited by quotation marks, braces, brackets or parentheses.
+
+<sect1>Selection expansion<P>
+A null selection (single click) with the middle or right mouse
+button will be expanded to some of the surrounding
+text.
+
+A click inside an existing selection will be expanded to that selection.
+
+This means you can select (with the left button)
+some complicated command once,
+and click the middle button inside
+this selection many times to execute the command repeatedly.
+
+This rule is also helpful when searching through multiple occurrences
+of a piece of text, as clicking with the right button in the most recently found
+instance searches for the next instance.
+
+A click that is not inside an existing selection will be expanded depending
+on which mouse button was used.
+Clicks with the middle button
+are expanded to select commands, i.e. strings of alphanumeric characters,
+|, &gt; or &lt;. 
+Clicks with the right button
+are expanded to select addresses, i.e. strings of alphanumeric characters,
+:, ",".
+
+<sect1>Combinations of Mouse Buttons (mouse chords)<P>
+
+Pressing more than one mouse button at a time is called a mouse chord,
+and can be used for some special short cuts.
+
+<sect1>Cut,Paste mouse chords<P>
+
+To cut some text into the clipboard, select the text with the left
+button, and <em>while holding it down</em>, click the middle button.
+The selected text will be cut from the window and copied to the
+clipboard.
+
+Similarly, select some text with the left mouse button, and while
+holding it down also click the right button, and the selected text will
+be replaced by the contents of the clipboard.  The clipboard will be
+unaltered.
+
+Note that so long as you hold the left button down, you can alternately
+cut and paste the selected text by pressing the middle and right
+buttons.  A cut immediately followed by a paste in this way leaves the
+file unmodified.
+
+<sect1>Execute with argument<P>
+
+A command can be called with an argument using another mouse chord.
+Sweep the command with the middle button, and while holding it down,
+click the left button.  The command is invoked with the text most
+recently selected with the left button as argument.  For example, one
+might select <tt>main.c</tt> with the left button, then chord the
+middle and left buttons on the word <tt>wc</tt> to run <tt>wc
+main.c</tt>.
+
+When an argument is selected in this manner, the context of the
+argument becomes the context of the command.  One idiom is to select
+some text in one window, and <tt>Look</tt> for it in another window
+using this chord.
+
+<sect>Execute<P>
+
+If text is selected with the middle mouse button, it is executed.
+
+If you press the middle button in some text, then decide you
+<em/don't/ want to execute it, press the right mouse button
+to abort.
+
+If the text is the name of one of the builtin functions, that function
+will be executed.
+
+If the text begins with |, &gt; or &lt;, the most recent selection will
+be piped through the command, piped to the command, or replaced by the
+output of the command, respectively.
+
+The command is executed by
+<tt>&dollar;SHELL -c command [argument]</tt>.
+If <tt>&dollar;SHELL</tt> is not defined, <tt>/bin/sh</tt> is used.
+
+Standard output from the command will appear in a window in wily.
+Standard input for the command will be from <tt>/dev/null</tt>.
+
+The main wily tag indicates which programs are currently
+running.
+
+Wily tends to be more useful if <TT>.</TT> is in <tt>&dollar;PATH</tt>
+
+<sect1>Builtin Functions<P>
+
+These commands are looked for first.  Some of them operate differently
+if called with an argument (using the Middle/Left mouse chord).
+
+<descrip>
+<tag>Put,Get,Putall</tag>
+	Put and Get write the window to disk, or fetch from disk, respectively.
+	If called with an argument, they will use the argument this as the
+	filename, instead of the name of the window.
+	
+	Putall writes all dirty files to disk.
+
+<tag>New, Del</tag>
+        Create a new window, or delete a window, respectively.  If New
+        is called with an argument, it will use the argument as the name
+        of a file to create.
+
+<tag>Look</tag>
+Searches in the window containing Look for literal text: either the argument,
+if it is given one, or the current selection in the window containing Look
+
+<tag>Undo, Redo</tag>
+Undo or redo an action.  With an argument, undo(redo) until the window
+reflects the state of the file on disk.
+
+<tag>Newcol, Delcol</tag>
+Create or delete a column
+
+<tag>Cut, Paste, Snarf</tag>
+Cut the currently selected text to the X selection buffer,
+replace the currently selected text with the X selection buffer,
+or copy the currently selected text to the X selection buffer, respectively.
+
+The <em/currently selected text/ is defined as the selection in 
+the most recently selected window.  This should be indicated by
+that window having a slightly thicker border.
+
+<tag>Quit</tag>
+Exit wily.  Any dirty files will be backed up.
+
+<tag>Kill</tag>
+Kill some process which was started from wily.  Kill must be given
+as an argument the name of the process to kill.  The
+topmost tag always contains the list of long-running programs
+started from within wily.
+To kill one of these, click in the name of the process in the
+tag, then do a middle/left mouse chord in 'Kill'.
+
+<tag>Font</tag>
+Toggle between fixed and proportional fonts.  Depending
+on where Font is clicked, changes the font for a window, a column,
+or for all the windows on the screen.
+
+<tag>Dotfiles</tag>
+Toggles whether or not dot files are displayed in directories.  Directories
+will not be re-read automatically, though.
+
+<tag>Anchor</tag>
+Puts an address in the tag of the most recently selected window.  The
+address is from the current position to '.'.  This can be used to select
+large chunks of text.  Click at the beginning position, execute Anchor,
+click at the end position, then click with the right mouse button in the
+address in the tag.  The anchor may also be used as a bookmark.
+
+<tag>Split</tag>
+Split the most recently selected window into two.  Editing actions in
+one window will be visible in the other.
+</descrip>
+
+<sect>Goto Text<P>
+
+Wily will attempt to <em/goto/ text selected with the right mouse
+button.  What this means depends on the text selected.
+
+<P>The <em/goto/ operation used with B3 is polymorphic in that it
+recognises three different patterns:
+<DESCRIP>
+<tag/name/
+	If <TT/name/ is a file or directory, open it, otherwise search
+	for the literal <TT/name/
+<tag/:address/
+	Search for <TT/address/ in the current window, where
+	the form of an address is defined below.
+<tag/file:address/
+	Open <TT/file/ and search in it for <TT/address/
+</DESCRIP>
+
+<sect1>Addresses<P>
+
+Wily uses the address and regular expression code from
+<htmlurl url="http://plan9.bell-labs.com/plan9/doc/sam.html"
+name="Sam">.
+Please refer to the
+<htmlurl url="http://plan9.bell-labs.com/magic/man2html/1/sam"
+name="Sam manual">
+for a better explanation.
+
+The following description was cut and pasted from the
+<htmlurl url="http://plan9.bell-labs.com/magic/man2html/1/sam"
+name="Sam manual">
+
+<sect2>Simple Addresses<P>
+<descrip >
+<tag/&num;n/
+        The empty string after character n; &num;0 is the beginning of the file. 
+<tag/n/
+        Line n; 0 is the beginning of the file. 
+<tag>/regexp/  ?regexp? </tag>
+        The substring that matches the regular expression, found by
+        looking toward the end (/) or beginning (?) of the file, and
+        if necessary continuing the search from the other end to the
+        starting point of the search. The matched substring may straddle
+        the starting point. When entering a pattern containing a literal
+        question mark for a backward search, the question mark should be
+        specified as a member of a class.
+<tag/&dollar;/
+        The null string at the end of the file. 
+<tag/./
+        Dot.  The current selection in a window.
+</descrip>
+
+<sect2>Compound Addresses<P>
+In the following, a1 and a2 are addresses. 
+<descrip >
+<tag/ a1+a2 /
+        The address a2 evaluated starting at the
+        end of a1.
+<tag/a1-a2 /
+        The address a2 evaluated looking in
+        the reverse direction starting at the
+        beginning of a1.
+<tag/a1,a2/
+        The substring from the beginning of a1
+        to the end of a2. If a1 is missing, 0
+        is substituted. If a2 is missing, &dollar; is
+        substituted.
+<tag/a1;a2 /
+       Like a1,a2 but with a2 evaluated at the end
+       of, and dot set to, a1.
+</descrip>
+
+The operators + and - are high precedence, while ,
+and ; are low precedence.
+
+In both + and - forms, if a2 is a line or
+character address with a missing number, the
+number defaults to 1. If a1 is missing, . is
+substituted. If both a1 and a2 are present and
+distinguishable, + may be elided. a2 may be a
+regular expression; if it is delimited by ?'s, the
+effect of the + or - is reversed.
+
+It is an error for a compound address to represent
+a malformed substring. Some useful idioms: a1+-
+%(a1-+) selects the line containing the end
+(beginning) of a1. 0/regexp/ locates the first
+match of the expression in the file. (The form
+0;// sets dot unnecessarily.) ./regexp/// finds
+the second following occurrence of the expression,
+and .,/regexp/ extends dot.
+
+<sect1>Cursor Warping<P>
+
+After a successful search, the text that was found is highlighted, and
+the cursor is warped there, so that to search for the next instance of
+the search text, no cursor movement is required, it is only necessary
+to click the rightmost mouse button again.
+
+Window re-arranging operations warp the cursor to the resize box of the
+window that moved, so the move can be easily refined.
+
+<sect>Miscellaneous<P>
+<sect1>Window Reshaping<P>
+
+Wily windows are placed automatically using heuristics.  Hopefully most
+of the time the window will be placed somewhere useful.  However,
+windows and columns can be moved and reshaped.  The resize box (the
+little box on the far left of the tag) of a pane or a column may be
+manipulated to move or reshape a window.
+
+Dragging the resize box (with any mouse button) moves the column or
+window to the desired location.
+
+Clicking in a pane's button with different mouse buttons has these
+different effects:
+<descrip >
+<tag/Left button/
+	the window grows a bit, first taking up any blank space
+	in the column
+<tag/Middle button/
+	Every window except the desired one is shrunk so that only their tags
+	are visible, leaving more space for the desired window.
+<tag/Right button/
+	The window expands to take up the whole column, obscuring all the other
+	windows in that column. Clicking with
+	any mouse button in the window's resize box will undo this effect.
+</descrip>
+
+<sect1>Back-up files<P>
+
+Whenever a window is to be deleted which represents a file and which
+contains text which hasn't been written to disk, a backup is made.
+This is an experimental alternative to the familiar (and
+often-annoying) &quot;are you <em/sure/ you want to close this
+window?&quot;  dialog.  A warning message is printed when this happens,
+alerting the user, and allowing her to easily recover the modified
+file, or compare the old and new files.
+
+This seems not only quicker but safer than forcing a dialog, as
+occasionally the user might give the wrong answer to a dialog, whereas
+with this system a backup is always there.
+
+Backup files are kept in directory <tt>&dollar;WILYBAK</tt> if it
+exists, or <tt>&dollar;HOME/.wilybak</tt>.  In this directory the file
+<tt>TOC</tt> is a table of contents showing what real file each backup
+file maps to.
+
+<sect1>Remote Control<P>
+
+A programming interface is provided to wily, for writing  more complex
+programs such as mailers, news readers, terminals, code browsers, etc.
+See the <htmlurl url="msg.html" name="Wily Message Interface guide">
+for more details.
+
+<sect1>Fonts<P>
+
+(Taken from font(4))
+
+External fonts are described by a plain text file that can be read
+using <em/rdfontfile/.  The format of the file is a header followed by
+any number of subfont range specifications.  The header contains two
+numbers: the height and the ascent.  The height is the inter-line
+spacing and the ascent is the distance from the top of the line to the
+baseline.  These numbers are chosen to display consistently all the
+subfonts of the font.  A subfont range specification contains two
+numbers and a font name.  The numbers are the inclusive range of
+characters covered by the subfont, and name specifies the name of an X
+font suitable for <em/getsubfont/.  The minimum number of a covered
+range is mapped to the first defined character of the corresponding
+subfont.  Each field must be followed by some white space.  Each
+numeric field may be C-format decimal, octal, or hexadecimal.
+
+Here is the start of the font file the author uses for a monospace font:
+
+<tscreen><verb>
+17	14
+0x0000	0x00FF	lucm.latin1.9
+0x0100	0x017E	lucm.latineur.9
+0x0180	0x01F0	matty.latinext.9
+0x0250	0x02E9	lucm.ipa.9
+0x0300	0x0308	matty.gendiacritics.9
+0x0370	0x0372	matty.greekpunc.9
+0x0386	0x03F5	lucm.greek.9
+0x0400	0x0475	misc.cyrillic.9
+</verb></tscreen>
+
+<sect1>Entering non-ASCII characters<P>
+
+Refer to the Plan 9
+<htmlurl url="http://plan9.bell-labs.com/magic/man2html/6/keyboard"
+name="keyboard(6)"> manual page, which is <em/mostly/ how
+it works in wily.
+
+</article>

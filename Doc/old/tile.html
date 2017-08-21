@@ -1,0 +1,815 @@
+<html><head><title> tile.nw</title></head><body><html>
+<head></head>
+<body>
+<h1>A New Window Management Scheme for Wily</h1>
+
+<h2>Goals</h2>
+
+<ol>
+        <li>Generalization of code for both column and row management.
+
+        <li>Help take care of some stuff-locating code (such as finding
+        the stuff under a mouse click).
+
+        <li>Adding and immediately deleting a window should not
+        change the placement of the remaining windows.
+</ol>
+
+<a name="NWD1"><h2>D</a>ata Structures</h2>
+
+<h3>Tiles</h3>
+
+Central to the new window management system is the <em>tile</em>.
+The tile contains the minimum amount of information necessary to
+rearrange the elements of <a href="#tile list>tile list</a> to which it belongs.
+This information consists of:
+
+<pre><a name="NWtil7-datF-1" href="#NWD1"><dfn>&lt;data structures&gt;=</dfn></a> <b>(<a href="#NWtil7-tilA-1">U-></a>)</b> <b>[D<a href="#NWD6">-></a>]</b>
+typedef struct Tile Tile;
+struct Tile {
+        <a name="NWtil7-datF-1-u1" href="#NWD2"><i>&lt;tile elements&gt;</i></a>
+};
+</pre><p>
+
+<a name="NWD2"><ol></a>
+        <li>The starting and ending location of the tile in screen
+        coordinates (this could be either the <code>x</code> or <code>y</code> coordinate).
+        The terms "min" and "max" are used for consistency with
+        the definition of <code>Rectangle</code>.
+<pre><a name="NWtil7-tilD-1" href="#NWD2"><dfn>&lt;tile elements&gt;=</dfn></a> <b>(<a href="#NWD1"><-U</a>)</b> <b>[D<a href="#NWD3">-></a>]</b>
+int min, max;
+</pre><p>
+<a name="NWD3">        <li>T</a>he minimum size of the tile.  As a special case,
+        non-positive tiles sizes are permitted for hidden tiles
+        (this is explained in detail elsewhere).
+<pre><a name="NWtil7-tilD-2" href="#NWD2"><dfn>&lt;tile elements&gt;+=</dfn></a> <b>(<a href="#NWD1"><-U</a>)</b> <b>[<a href="#NWD2"><-</a>D<a href="#NWD4">-></a>]</b>
+int base;
+</pre><p>
+<a name="NWD4">        <li>T</a>he size increment of the tile.  This is the amount by
+        which the tile must grow.  For example, text windows need
+        to grow by the height of the font they display.
+<pre><a name="NWtil7-tilD-3" href="#NWD2"><dfn>&lt;tile elements&gt;+=</dfn></a> <b>(<a href="#NWD1"><-U</a>)</b> <b>[<a href="#NWD3"><-</a>D<a href="#NWD5">-></a>]</b>
+int step;
+</pre><p>
+<a name="NWD5">        <li>A</a> pointer to the enclosing tile list.
+<pre><a name="NWtil7-tilD-4" href="#NWD2"><dfn>&lt;tile elements&gt;+=</dfn></a> <b>(<a href="#NWD1"><-U</a>)</b> <b>[<a href="#NWD4"><-</a>D]</b>
+TileList* list;
+</pre><p>
+</ol>
+
+Instead of putting a pointer to a tile in all the windows and columns,
+we simply insist that the first element in a window or column is a tile
+<a name="NWD6">s</a>tructure.  This way, <code>(struct tile *) windowptr</code> makes sense.
+
+
+<a name="tile list"><h3>Tile Lists</h3></a>
+
+Tiles are strewn out in lists.  Instead of using linked lists, I have
+chosen to use arrays, but that is just an implementation detail.
+TileLists need a rectangle to determine where its tiles go.
+
+<pre><a name="NWtil7-datF-2" href="#NWD1"><dfn>&lt;data structures&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilA-1">U-></a>)</b> <b>[<a href="#NWD1"><-</a>D]</b>
+struct TileList {
+        <a name="NWtil7-datF-2-u1" href="#NWD7"><i>&lt;tile list elements&gt;</i></a>
+};
+</pre><p>
+
+<a name="NWD7">T</a>he tile list consists of
+
+<ol>
+        <li>A tile structures (since tile lists are themselves tiles).
+        Note that <code>self</code> is not used in anywhere in the tile code,
+        as the the tile list may be a member of a super-tile-list running
+        the other way.
+<pre><a name="NWtil7-tilI-1" href="#NWD7"><dfn>&lt;tile list elements&gt;=</dfn></a> <b>(<a href="#NWD6"><-U</a>)</b> <b>[D<a href="#NWD8">-></a>]</b>
+Tile self;
+</pre><p>
+<a name="NWD8">        <li>T</a>he array of tiles it contains.
+<pre><a name="NWtil7-tilI-2" href="#NWD7"><dfn>&lt;tile list elements&gt;+=</dfn></a> <b>(<a href="#NWD6"><-U</a>)</b> <b>[<a href="#NWD7"><-</a>D<a href="#NWD9">-></a>]</b>
+Tile **tiles;
+</pre><p>
+<a name="NWD9">        <li>T</a>he range to which the tile list elements are limited.
+<pre><a name="NWtil7-tilI-3" href="#NWD7"><dfn>&lt;tile list elements&gt;+=</dfn></a> <b>(<a href="#NWD6"><-U</a>)</b> <b>[<a href="#NWD8"><-</a>D<a href="#NWDA">-></a>]</b>
+int min, max;
+</pre><p>
+<a name="NWDA">        <li>T</a>he number of tiles currently in the array, and the maximum
+        size of the tile array.
+<pre><a name="NWtil7-tilI-4" href="#NWD7"><dfn>&lt;tile list elements&gt;+=</dfn></a> <b>(<a href="#NWD6"><-U</a>)</b> <b>[<a href="#NWD9"><-</a>D<a href="#NWDB">-></a>]</b>
+ushort count, maxtiles;
+</pre><p>
+<a name="NWDB">        <li></a><code>hidden</code> is used to determine how many tiles
+        are hidden "to the left of" the tiles actually displayed (as a result of
+        a B3, for instance).
+<pre><a name="NWtil7-tilI-5" href="#NWD7"><dfn>&lt;tile list elements&gt;+=</dfn></a> <b>(<a href="#NWD6"><-U</a>)</b> <b>[<a href="#NWDA"><-</a>D]</b>
+ushort hidden;
+</pre><p>
+<a name="NWDC">}</a>;
+<pre><a name="NWtil7-typ8-1" href="#NWDC"><dfn>&lt;typedefs&gt;=</dfn></a> <b>(<a href="#NWDj">U-></a>)</b>
+typedef struct TileList TileList;
+</pre><p>
+
+
+<h2>Operations</h2>
+
+There really are only a few operations that involve tiles.
+
+<ol>
+        <li>Adding a tile to a tile list (e.g., as a result of a New), either
+        arbitrarily or near a desired location.
+
+        <li>Removing a tile from its tile list (e.g., as a result of a Del).
+
+        <li>Moving a tile within a tile list.  This might look better
+        than simply deleting and adding it, especially if the tile
+        is not really moving (i.e., it is just growing or shrinking).
+
+        <li>Making a tile big enough to be visible (necessary to make sure
+        that new output is visible, for instance).
+
+        <li>Locating a tile in a tile list given a location (to figure out
+        where typing should go).
+
+        <li>Growing a tile "some" (for B1 clicks), "lots" (for B2 clicks),
+        or "way lots" (for B3 clicks).
+
+        <li>Resizing.  This should only occur as a result of wily's
+        X window being resized.
+</ol>
+
+The only policy that tiles and tile collections are responsible for is
+how to handle B1, B2, and B3 clicks, and what to do when a window is
+deleted.  The operator to add a tile will take hints as to where to place
+a tile (with respect to a location).
+
+
+<h3>Growing a Tile</h3>
+
+<a name="NWDD">G</a>rowing a tile proceeds in two simple steps:  Make the tile the desired
+size, and then push everything else out of the way.  <strong>With a B3,
+it would also be desirable to mark everything else as hidden instead
+of adjusting the windows unnecessarily).
+
+<p>Since the tile growth is rather blind at times, <code>tile_list_reshaped</code>
+is called without a specific "untouchable" tile, thereby fixing a prior bug.
+
+<pre><a name="NWtil7-pubL-1" href="#NWDD"><dfn>&lt;public tile functions&gt;=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[D<a href="#NWDH">-></a>]</b>
+void
+tile_grow(Tile *tile, Growth grow) {
+        TileList *list = tile-&gt;list;
+        <a name="NWtil7-pubL-1-u1" href="#NWtil7-**tK-1"><i>&lt;<code>tile_grow</code> locals&gt;</i></a>
+
+        <a name="NWtil7-pubL-1-u2" href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>
+
+        switch (grow) {
+        case Gsome:
+                <a name="NWtil7-pubL-1-u3" href="#NWDE"><i>&lt;grow <code>tile</code> a little&gt;</i></a>
+                break;
+        case Gmost:
+                <a name="NWtil7-pubL-1-u4" href="#NWDF"><i>&lt;grow <code>tile</code> lots&gt;</i></a>
+                break;
+        case Gall:
+                <a name="NWtil7-pubL-1-u5" href="#NWDG"><i>&lt;grow <code>tile</code> way lots&gt;</i></a>
+                break;
+        default:
+                assert(grow != grow);
+        }
+        tile_list_reshaped(list, 0);
+}
+</pre><pre><a name="NWtil7-pubS-1" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[D<a href="#NWtil7-pubS-2">-></a>]</b>
+void tile_grow(Tile *, Growth);
+</pre><p>
+
+<a name="NWDE"><strong>T</a>his is probably too small</strong>, especially when a column is
+being grown, but it will work for now.  Also, <strong>it does not check
+boundary conditions.</strong>
+
+<pre><a name="NWtil7-groM-1" href="#NWDE"><dfn>&lt;grow <code>tile</code> a little&gt;=</dfn></a> <b>(<a href="#NWDD"><-U</a>)</b>
+tile-&gt;min -= tile-&gt;step;
+tile-&gt;max += tile-&gt;step;
+</pre><p>
+
+<a name="NWDF">T</a>he B2 implementation of this code relies slightly on the way
+<code>tile_list_reshaped</code> is currently implemented, as it relies
+on it not to hide any windows until it has tried shrinking
+them all.  Since this is good user interface policy anyhow, this
+assumption presents little problem.
+
+<pre><a name="NWtil7-groI-1" href="#NWDF"><dfn>&lt;grow <code>tile</code> lots&gt;=</dfn></a> <b>(<a href="#NWDD"><-U</a>)</b>
+space = list-&gt;min;
+for (i = list-&gt;hidden; i &lt; list-&gt;count; i++) {
+        if (list-&gt;tiles[i] == tile) {
+                tile-&gt;min = space;
+                space = 0;
+                continue;
+        }
+        space += list-&gt;tiles[i]-&gt;base;
+}
+tile-&gt;max = list-&gt;max - space;
+</pre><pre><a name="NWtil7-**tK-1" href="#NWtil7-**tK-1"><dfn>&lt;<code>tile_grow</code> locals&gt;=</dfn></a> <b>(<a href="#NWDD"><-U</a>)</b>
+int i, space;
+</pre><p>
+
+To grow a tile way lots, the remaining tiles are added to the "hidden"
+list.  For the moment, the tiles are added in order by simply
+swapping the selected tile to the end of the array, but <strong>heuristics
+should be added</strong> so that the "least hidden" tile is the one the user
+<a name="NWDG">i</a>s most likely to want to see next.
+
+<p>A little trickery here -- the code only counts up to <code>count - 1</code>.
+This is because the tile being expanded way lots gets swapped to the end
+position in the array during the loop.  If the tile being expanded is already
+at the end, then there is no problem.  Of course, <strong>if the caller
+called with an array where <code>tile</code> was not in <code>list</code>, then there
+is a problem.</strong>
+
+<pre><a name="NWtil7-groM.2-1" href="#NWDG"><dfn>&lt;grow <code>tile</code> way lots&gt;=</dfn></a> <b>(<a href="#NWDD"><-U</a>)</b>
+for (i = list-&gt;hidden; i &lt; list-&gt;count - 1; i++) {
+        if (list-&gt;tiles[i] == tile) {
+                list-&gt;tiles[i] = list-&gt;tiles[list-&gt;count - 1];
+                list-&gt;tiles[list-&gt;count - 1] = tile;
+                continue;
+        }
+        list-&gt;tiles[i]-&gt;min = list-&gt;tiles[i]-&gt;max;
+}
+list-&gt;hidden = list-&gt;count - 1;
+tile-&gt;min = list-&gt;min;
+tile-&gt;max = list-&gt;max;
+</pre><p>
+
+
+<a name="NWDH"><h3>L</a>ocating a Tile</h3>
+
+This funtion simply relies on <code>index_for_place</code> to find the right
+tile and then looks the tile up in the array.
+
+<pre><a name="NWtil7-pubL-2" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDD"><-</a>D<a href="#NWDI">-></a>]</b>
+Tile *
+point2tile(TileList *list, int spot) {
+        int i = index_for_place(list, spot);
+
+        check_list_consistency(list);
+
+        return (i &gt;= 0) ? list-&gt;tiles[i] : 0;
+}
+</pre><pre><a name="NWtil7-pubS-2" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-1"><-</a>D<a href="#NWtil7-pubS-3">-></a>]</b>
+Tile *point2tile(TileList *, int);
+</pre><p>
+
+<a name="NWDI"><h3>M</a>aking a Tile Visible</h3>
+
+<strong>As a gross heuristic,</strong>
+the tile size is set to <code>base</code>+3<code>step</code>.  If there is not enough room for
+that, make the tile simply take the whole list over.
+Of course, if the tile is already showing, there is no reason to expand it.
+
+<pre><a name="NWtil7-pubL-3" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDH"><-</a>D<a href="#NWDK">-></a>]</b>
+void
+tile_show(Tile *tile) {
+        TileList *list;
+
+        <a name="NWtil7-pubL-3-u1" href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>
+        list = tile-&gt;list;
+        check_list_consistency(list);
+
+        if (TILESIZE(tile) == 0) {
+                <a name="NWtil7-pubL-3-u2" href="#NWDJ"><i>&lt;expose the hidden tile <code>tile</code>&gt;</i></a>
+        }
+        if (TILESIZE(tile) &gt;= tile-&gt;base + tile-&gt;step)
+                return;
+        tile-&gt;max = tile-&gt;min + tile-&gt;base + 3 * tile-&gt;step;
+        if (tile-&gt;max &gt; list-&gt;max) {
+                tile-&gt;max = list-&gt;max;
+                tile-&gt;min = tile-&gt;max - (tile-&gt;base + 3 * tile-&gt;step);
+                if (tile-&gt;min &lt; list-&gt;min)
+                        tile-&gt;min = list-&gt;min;
+        }
+        tile_list_reshaped(list, tile);
+}
+</pre><pre><a name="NWtil7-pubS-3" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-2"><-</a>D<a href="#NWtil7-pubS-4">-></a>]</b>
+void tile_show(Tile *);
+</pre><p>
+
+<a name="NWDJ">H</a>idden tiles present a small problem -- they first
+must be "unhidden" so they can be displayed.  <strong>For
+lack of a better place to put it,</strong>, the tile is added at
+the end of the tile list.  +Errors windows probably belong at
+the bottom anyhow.
+
+<pre><a name="NWtil7-expV-1" href="#NWDJ"><dfn>&lt;expose the hidden tile <code>tile</code>&gt;=</dfn></a> <b>(<a href="#NWDI"><-U</a>)</b>
+int i;
+
+for (i = 0; i &lt; list-&gt;count &amp;&amp; tile != list-&gt;tiles[i]; i++)
+        ;
+while (++i &lt; list-&gt;count)
+        list-&gt;tiles[i-1] = list-&gt;tiles[i];
+list-&gt;tiles[i] = tile;
+list-&gt;hidden--;
+</pre><p>
+
+
+<a name="NWDK"><h3>M</a>oving a Tile Within a Tile List</h3>
+
+<strong>Just add and delete it for now.</strong>
+
+<pre><a name="NWtil7-pubL-4" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDI"><-</a>D<a href="#NWDL">-></a>]</b>
+void
+tile_move(Tile *tile) {
+        tile_del(tile);
+        tile_add(tile-&gt;list, tile);
+}
+</pre><pre><a name="NWtil7-pubS-4" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-3"><-</a>D<a href="#NWtil7-pubS-5">-></a>]</b>
+void tile_move(Tile *);
+</pre><p>
+
+
+<a name="NWDL"><h3>A</a>dding a Tile to a Tile List</h3>
+
+This function uses the minimum coordinate of the new
+tile to determine where it should go.
+<strong>What if the caller doesn't care?</strong>
+If the caller does not know how large it wants the tile, it should
+specify a tile with a size of 0.
+
+<pre><a name="NWtil7-pubL-5" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDK"><-</a>D<a href="#NWDQ">-></a>]</b>
+void
+tile_add(TileList *list, Tile *tile) {
+        <a name="NWtil7-pubL-5-u1" href="#NWtil7-locX-1"><i>&lt;local variables for adding a tile&gt;</i></a>
+
+        <a name="NWtil7-pubL-5-u2" href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>
+        check_list_consistency(list);
+
+        <a name="NWtil7-pubL-5-u3" href="#NWDM"><i>&lt;make sure tile shape is reasonable&gt;</i></a>
+        <a name="NWtil7-pubL-5-u4" href="#NWDN"><i>&lt;determine where to place the new tile in the list&gt;</i></a>
+        <a name="NWtil7-pubL-5-u5" href="#NWDP"><i>&lt;add the tile to the list&gt;</i></a>
+        tile-&gt;list = list;
+        tile_list_reshaped(list, tile);
+}
+</pre><pre><a name="NWtil7-pubS-5" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-4"><-</a>D<a href="#NWtil7-pubS-6">-></a>]</b>
+void tile_add(TileList *, Tile *);
+</pre><p>
+
+<a name="NWDM">T</a>he tile location must be constrained to its collection.
+If the tile is so deformed after this reshaping that its size
+exceeds the bounds of its container, it is simply shrunk to zero
+size.
+
+<pre><a name="NWtil7-makY-1" href="#NWDM"><dfn>&lt;make sure tile shape is reasonable&gt;=</dfn></a> <b>(<a href="#NWDL"><-U</a>)</b>
+assert(tile-&gt;min &lt; tile-&gt;max);
+if (tile-&gt;min &lt; list-&gt;min) {
+        tile-&gt;max += list-&gt;min - tile-&gt;min;
+        tile-&gt;min = list-&gt;min;
+}
+if (tile-&gt;max &gt; list-&gt;max) {
+        tile-&gt;max = list-&gt;max;
+}
+if (tile-&gt;max - tile-&gt;min &lt; tile-&gt;base)
+        tile-&gt;min = tile-&gt;max = 0;
+</pre><p>
+
+<a name="NWDN">T</a>o determine where the tile should go in the list, we perform a
+binary search on the tiles in the tile list to find the tile
+containing <code>tile-&gt;min</code>.  This will be useful enough to warrant
+a separate function.  The program must then determine whether the
+new tile will go before or after the tile it is being placed on.
+The tile is placed so that the tile it is supplanting is moved as little
+as possible.
+
+<pre><a name="NWtil7-detn-1" href="#NWDN"><dfn>&lt;determine where to place the new tile in the list&gt;=</dfn></a> <b>(<a href="#NWDL"><-U</a>)</b>
+if (list-&gt;count == list-&gt;hidden) {
+        i = list-&gt;hidden;
+        tile-&gt;min = list-&gt;min;
+        tile-&gt;max = list-&gt;max;
+} else {
+        i = index_for_place(list, tile-&gt;min);
+        if ((<a name="NWtil7-detn-1-u1" href="#NWDO"><i>&lt;distance to move current tile up&gt;</i></a>) &lt; 
+                        (<a name="NWtil7-detn-1-u2" href="#NWtil7-disY-1"><i>&lt;distance to move current tile down&gt;</i></a>)) {
+                i++;
+        }
+}
+</pre><pre><a name="NWtil7-locX-1" href="#NWtil7-locX-1"><dfn>&lt;local variables for adding a tile&gt;=</dfn></a> <b>(<a href="#NWDL"><-U</a>)</b> <b>[D<a href="#NWtil7-locX-2">-></a>]</b>
+ushort i;
+</pre><p>
+
+<a name="NWDO">M</a>oving a tile up means just moving it by the distance from its
+bottom to the desired top of the new window.  Figuring out how
+far a tile down would move down is more complicated, but essentially
+works out to the distance from the top of the displaced tile to the
+bottom of the new tile.
+
+<pre><a name="NWtil7-disW-1" href="#NWDO"><dfn>&lt;distance to move current tile up&gt;=</dfn></a> <b>(<a href="#NWDN"><-U</a>)</b>
+list-&gt;tiles[i]-&gt;max - tile-&gt;min
+</pre><pre><a name="NWtil7-disY-1" href="#NWtil7-disY-1"><dfn>&lt;distance to move current tile down&gt;=</dfn></a> <b>(<a href="#NWDN"><-U</a>)</b>
+tile-&gt;max - list-&gt;tiles[i]-&gt;min
+</pre><p>
+
+<a name="NWDP">O</a>nce we know where in the array the tile goes, the other tiles
+need to be shuffled out of the way.
+
+<pre><a name="NWtil7-addO-1" href="#NWDP"><dfn>&lt;add the tile to the list&gt;=</dfn></a> <b>(<a href="#NWDL"><-U</a>)</b>
+<a name="NWtil7-addO-1-u1" href="#NWDa"><i>&lt;make sure tile list has room for one more&gt;</i></a>
+for (j = ++list-&gt;count; j &gt; i; j--)
+        list-&gt;tiles[j] = list-&gt;tiles[j-1];
+list-&gt;tiles[i] = tile;
+</pre><pre><a name="NWtil7-locX-2" href="#NWtil7-locX-1"><dfn>&lt;local variables for adding a tile&gt;+=</dfn></a> <b>(<a href="#NWDL"><-U</a>)</b> <b>[<a href="#NWtil7-locX-1"><-</a>D]</b>
+ushort j;
+</pre><p>
+
+<a name="NWDQ"><h3>R</a>emoving a Tile from a List</h3>
+
+This is pretty dull, actually -- the remaining elements
+of the tile list are shuffled down in the array, and then
+the tiles are resized to fit the new tile list.
+
+<p>One bug found:  I was passing <code>tile</code> into <code>tile_list_reshaped</code>,
+of all the silly things.
+
+<pre><a name="NWtil7-pubL-6" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDL"><-</a>D<a href="#NWDR">-></a>]</b>
+void
+tile_del(Tile *tile) {
+        TileList *list = tile-&gt;list;
+        int i;
+
+        for (i = 0; i &lt; list-&gt;count; i++) {
+                if (list-&gt;tiles[i] == tile) {
+                        while (++i &lt; list-&gt;count) {
+                                list-&gt;tiles[i-1] = list-&gt;tiles[i];
+                        }
+                        list-&gt;count--;
+                        tile_list_reshaped(list, 0);
+                        return;
+                }
+        }
+        assert(0);
+}
+</pre><pre><a name="NWtil7-pubS-6" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-5"><-</a>D<a href="#NWtil7-pubS-7">-></a>]</b>
+void tile_del(Tile *);
+</pre><p>
+
+
+<h3>Adjusting tile sizes</h3>
+
+When there is not enough room for the collection's tiles as they
+stand, this function is called to fix the tiles.  The <code>tile</code> argument
+is used to indicate the tile that should not be adjusted.  
+<a name="NWDR">S</a>pecifying a <code>tile</code> of zero prevents any tile from being treated
+as special.
+
+<p>
+Adjusting the tiles, then, is split into two phases -- adjusting
+the tiles above <code>tile</code>, and adjusting those below it.  <code>tileidx</code> is
+used in the next chunk of code.  It is initially set to a location
+not in the tile list.
+
+<pre><a name="NWtil7-pubL-7" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDQ"><-</a>D<a href="#NWDc">-></a>]</b>
+void
+tile_list_reshaped(TileList *list, Tile *tile) {
+        int i;
+        int tileidx = -1;
+        <a name="NWtil7-pubL-7-u1" href="#NWtil7-**tT-1"><i>&lt;<code>tile_list_reshaped</code> locals&gt;</i></a>
+
+        if (!tile)
+                adjust_sizes_in_range(list, list-&gt;hidden, list-&gt;count,
+                                list-&gt;max - list-&gt;min);
+        else {
+                <a name="NWtil7-pubL-7-u2" href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>
+
+                for (i = 0; list-&gt;tiles[i] != tile; i++) {
+                        assert(i &lt; list-&gt;count);
+                }
+                tileidx = i;
+                adjust_sizes_in_range(list, list-&gt;hidden, i, tile-&gt;min - list-&gt;min);
+                adjust_sizes_in_range(list, i + 1, list-&gt;count, list-&gt;max - tile-&gt;max);
+        }
+        <a name="NWtil7-pubL-7-u3" href="#NWDS"><i>&lt;repair tile locations&gt;</i></a>
+        check_list_consistency(list);
+}
+</pre><pre><a name="NWtil7-pubS-7" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-6"><-</a>D<a href="#NWDX">-></a>]</b>
+void tile_list_reshaped(TileList *, Tile *);
+</pre><p>
+
+<a name="NWDS">O</a>nce the tiles all fit, their locations must be updated
+(<code>adjust_sizes_in_range</code> does not do this).  This is merely
+a matter of sticking the tiles end-to-end.
+
+<pre><a name="NWtil7-repL-1" href="#NWDS"><dfn>&lt;repair tile locations&gt;=</dfn></a> <b>(<a href="#NWDR"><-U</a>)</b>
+for (prevmax = list-&gt;min, i = list-&gt;hidden; i &lt; list-&gt;count; i++) {
+        if (i != tileidx) {
+                list-&gt;tiles[i]-&gt;max -= list-&gt;tiles[i]-&gt;min - prevmax;
+                list-&gt;tiles[i]-&gt;min = prevmax;
+        }
+        prevmax = list-&gt;tiles[i]-&gt;max;
+}
+</pre><pre><a name="NWtil7-**tT-1" href="#NWtil7-**tT-1"><dfn>&lt;<code>tile_list_reshaped</code> locals&gt;=</dfn></a> <b>(<a href="#NWDR"><-U</a>)</b>
+int prevmax;
+</pre><p>
+
+The tiles in a particular range are adjusted through a simple
+series of steps.  Note that this only adjusts the <em>sizes</em>
+of the tiles -- <em>it does not adjust the tiles' locations</em>.
+
+<p>
+Bugs found:
+
+<ol>
+<a name="NWDT">        <li>T</a>he expansion code was seriously broken.  Rethinking
+        it in terms of computing an amount to shrink the tile
+        dramatically simplified and improved the code.
+
+        <li>The expansion code did not work when there were no
+        tiles to adjust.  Optimizing out an empty range is probably
+        worthwhile anyhow.
+</ol>
+
+<pre><a name="NWtil7-staL-1" href="#NWDT"><dfn>&lt;static tile functions&gt;=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[D<a href="#NWDb">-></a>]</b>
+static void
+adjust_sizes_in_range(TileList *list, int start, int max, int available) {
+        <a name="NWtil7-staL-1-u1" href="#NWtil7-locZ-1"><i>&lt;local variables for tile adjustment&gt;</i></a>
+
+        if (start == max)
+                return;
+
+        <a name="NWtil7-staL-1-u2" href="#NWDU"><i>&lt;determine amount of space needed&gt;</i></a>
+        if (0 &amp;&amp; needed &lt; 0) {
+                <a name="NWtil7-staL-1-u3" href="#NWDW"><i>&lt;expand tiles to fill slack&gt;</i></a>
+                return;
+        }
+        <a name="NWtil7-staL-1-u4" href="#NWDV"><i>&lt;shrink tiles until space available&gt;</i></a>
+}
+</pre><p>
+
+<a name="NWDU">D</a>etermining the space required is easy -- determine the difference
+between the heights of the tiles and the collection they appear in.
+
+<pre><a name="NWtil7-detW-1" href="#NWDU"><dfn>&lt;determine amount of space needed&gt;=</dfn></a> <b>(<a href="#NWDT"><-U</a>)</b>
+needed = -available;
+for (i = start; i &lt; max; i++)
+        needed += TILESIZE(list-&gt;tiles[i]);
+</pre><pre><a name="NWtil7-locZ-1" href="#NWtil7-locZ-1"><dfn>&lt;local variables for tile adjustment&gt;=</dfn></a> <b>(<a href="#NWDT"><-U</a>)</b>
+int i;
+int needed;
+</pre><p>
+
+<a name="NWDV">A</a>t this point, tiles are shrunk in a fairly arbitrary manner.  The tile at
+the top gets shrunk first, and on down until the necessary space
+has been acquired.  <strong>Tiles should be removed from view completely
+if adequate space is not available.</strong>
+
+<p>
+<strong>A small ugly here -- there may be a gap right before
+the "fixed" tile.</strong>
+
+<pre><a name="NWtil7-shrY-1" href="#NWDV"><dfn>&lt;shrink tiles until space available&gt;=</dfn></a> <b>(<a href="#NWDT"><-U</a>)</b>
+for (i = start; needed &amp;&amp; i &lt; max; i++) {
+        int base = list-&gt;tiles[i]-&gt;base;
+        int step = list-&gt;tiles[i]-&gt;step;
+        int shrink = TILESIZE(list-&gt;tiles[i]) - base;
+
+        shrink = ((shrink - base) / step) * step + base;
+        if (shrink &gt; needed)
+                shrink = needed;
+        needed -= shrink;
+        list-&gt;tiles[i]-&gt;max -= shrink;
+}
+</pre><p>
+
+<a name="NWDW">F</a>or the moment, expanding to fill a gap is handled is a relatively arbitrary
+manner -- the last tile is grown to fill the gap.
+<strong>What about any fuzz?</strong>
+
+<pre><a name="NWtil7-expQ-1" href="#NWDW"><dfn>&lt;expand tiles to fill slack&gt;=</dfn></a> <b>(<a href="#NWDT"><-U</a>)</b>
+list-&gt;tiles[max-1]-&gt;max -= needed;
+</pre><p>
+
+
+<h2>Useful Macros</h2>
+
+<a name="NWDX"><h3>A</a>ccessing Tile Elements</h3>
+
+Abstracting access via tile structures can very much simplify
+the code.  The first one returns the tile representing the column in
+the global column list.  The second one returns the column in which
+a window resides.  It is not actually defined as a macro in order to
+improve type checking.
+
+<pre><a name="NWtil7-pubS-8" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWtil7-pubS-7"><-</a>D<a href="#NWDY">-></a>]</b>
+#define COLTILE(t)      (&amp;(t)-&gt;tiles.self)
+static Col *WINCOL(Win *w) {return (Col *) w-&gt;tile.list;}
+</pre><p>
+
+
+<a name="NWDY"><h3>I</a>teration</h3>
+
+There is no reason that every file dealing with tile lists need care
+about the internals of the list.  This also substantially helps if
+the algorithm needs to be rearranged.
+
+<pre><a name="NWtil7-pubS-9" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWDX"><-</a>D<a href="#NWDZ">-></a>]</b>
+#define FOR_ALL_TILES(t, l)\
+{ int __fral;\
+        for (__fral = 0; __fral &lt; (l)-&gt;count &amp;&amp; (t = (l)-&gt;tiles[__fral]); __fral++)
+#define FOR_ALL_SHOWING_TILES(t, l)\
+{ int __fral;\
+        for (__fral = (l)-&gt;hidden; __fral &lt; (l)-&gt;count &amp;&amp; (t = (l)-&gt;tiles[__fral]); __fral++)
+#define END_ALL }
+</pre><p>
+
+
+<a name="NWDZ"><h3>C</a>omputing a Tile's Height</h3>
+
+This is a trivial computation, but occurs frequently enough to
+warrant its own macro.
+
+<pre><a name="NWtil7-pubS-A" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWDY"><-</a>D<a href="#NWtil7-pubS-B">-></a>]</b>
+#define TILESIZE(tile)  ((tile)-&gt;max - (tile)-&gt;min)
+</pre><p>
+
+
+<a name="NWDa"><h2>I</a>nternal Functions</h2>
+
+<h3>TileList Management</h3>
+
+For the moment, the only code we have to worry about is the
+stuff that makes sure adding a tile goes cleanly.  The array in
+the tile list grows exponentially.  It never shrinks, as it should
+never get very large anyhow.
+
+<pre><a name="NWtil7-makf-1" href="#NWDa"><dfn>&lt;make sure tile list has room for one more&gt;=</dfn></a> <b>(<a href="#NWDP"><-U</a>)</b>
+if (list-&gt;count == list-&gt;maxtiles) {
+        list-&gt;maxtiles *= 2;
+        list-&gt;tiles = realloc(list-&gt;tiles, list-&gt;maxtiles * sizeof(list-&gt;tiles[0]));
+}
+</pre><p>
+
+<h3>Finding a Tile</h3>
+
+Finding a tile given a location is useful on at least a couple of
+occassions.  This function returns the index of the tile in the supplied
+list, or -1 if no such tile exists.
+
+<a name="NWDb">T</a>his is a little extra-clever because we can search through the
+tiles binarily instead of just slogging through them linearly.
+
+We see that this terminates because, on every iteration, either
+<code>start</code> is increased by at least 1 or <code>end</code> is decreased by at
+least one (because of C's rounding, <code>start + (end - start / 2</code>
+is always less than <code>start + (end - start)</code>).
+
+<pre><a name="NWtil7-staL-2" href="#NWDT"><dfn>&lt;static tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDT"><-</a>D]</b>
+static int
+index_for_place(TileList *list, int spot) {
+        int start = list-&gt;hidden;
+        int end = list-&gt;count;
+        int mid;
+        Tile *tile;
+
+        while (start &lt; end) {
+                mid  = start + (end - start) / 2;
+                tile = list-&gt;tiles[mid];
+                if (spot &lt; tile-&gt;min)
+                        end = mid;
+                else if (spot &gt; tile-&gt;max)
+                        start = mid + 1;
+                else
+                        return mid;
+        }
+        return -1;
+}
+</pre><p>
+
+
+<a name="NWDc"><h2>A</a>ssertions</h2>
+There will be some useful assertions to make at various points in the code.
+Some are catastrophic, others are merely aeshetic problems.
+
+<pre><a name="NWtil7-pubL-8" href="#NWDD"><dfn>&lt;public tile functions&gt;+=</dfn></a> <b>(<a href="#NWtil7-til6-1">U-></a>)</b> <b>[<a href="#NWDR"><-</a>D]</b>
+void
+check_tile_consistency(Tile *tile) {
+        <a name="NWtil7-pubL-8-u1" href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>
+}
+
+void
+check_list_consistency(TileList *list) {
+        int i;
+        Tile *t;
+
+        <a name="NWtil7-pubL-8-u2" href="#NWDd"><i>&lt;tile list consistency checks&gt;</i></a>
+        FOR_ALL_TILES(t, list) {
+                check_tile_consistency(t);
+        } END_ALL;
+}
+</pre><pre><a name="NWtil7-pubS-B" href="#NWtil7-pubS-1"><dfn>&lt;public function declarations&gt;+=</dfn></a> <b>(<a href="#NWtil7-tilB-1">U-></a>)</b> <b>[<a href="#NWDZ"><-</a>D]</b>
+void check_list_consistency(TileList *);
+</pre><p>
+
+<a name="NWDd"><p>C</a>atastrophic problems include:
+
+<ol>
+        <li>The tile list is null.
+<pre><a name="NWtil7-tilS-1" href="#NWDd"><dfn>&lt;tile list consistency checks&gt;=</dfn></a> <b>(<a href="#NWDc"><-U</a>)</b> <b>[D<a href="#NWDe">-></a>]</b>
+assert(list);
+</pre><p>
+
+<a name="NWDe">        <li>T</a>here are more tiles than there is space for them.
+<pre><a name="NWtil7-tilS-2" href="#NWDd"><dfn>&lt;tile list consistency checks&gt;+=</dfn></a> <b>(<a href="#NWDc"><-U</a>)</b> <b>[<a href="#NWDd"><-</a>D<a href="#NWDf">-></a>]</b>
+assert(list-&gt;count &lt;= list-&gt;maxtiles);
+</pre><p>
+
+<a name="NWDf">        <li>T</a>here are hidden tiles but no visible tiles.
+<pre><a name="NWtil7-tilS-3" href="#NWDd"><dfn>&lt;tile list consistency checks&gt;+=</dfn></a> <b>(<a href="#NWDc"><-U</a>)</b> <b>[<a href="#NWDe"><-</a>D<a href="#NWDg">-></a>]</b>
+assert(list-&gt;count == 0 || list-&gt;count &gt; list-&gt;hidden);
+</pre><p>
+
+<a name="NWDg">        <li>T</a>he first or last element of the tile list is off-screen.
+<pre><a name="NWtil7-tilS-4" href="#NWDd"><dfn>&lt;tile list consistency checks&gt;+=</dfn></a> <b>(<a href="#NWDc"><-U</a>)</b> <b>[<a href="#NWDf"><-</a>D<a href="#NWDh">-></a>]</b>
+assert(list-&gt;count == 0 || list-&gt;tiles[list-&gt;hidden]-&gt;min &gt;= list-&gt;min);
+assert(list-&gt;count == 0 || list-&gt;tiles[list-&gt;count - 1]-&gt;max &lt;= list-&gt;max);
+</pre><p>
+
+<a name="NWDh">        <li>T</a>he <code>max</code> edge of one tile is not equal to the <code>min</code>
+        edge of the following tile.
+<pre><a name="NWtil7-tilS-5" href="#NWDd"><dfn>&lt;tile list consistency checks&gt;+=</dfn></a> <b>(<a href="#NWDc"><-U</a>)</b> <b>[<a href="#NWDg"><-</a>D]</b>
+for (i = list-&gt;hidden + 1; i &lt; list-&gt;count; i++)
+        assert(list-&gt;tiles[i-1]-&gt;max == list-&gt;tiles[i]-&gt;min);
+</pre><p>
+
+<a name="NWDi">        <li>T</a>he tile's tag is not at <code>tile.r.min</code>.
+
+        <li>The tile's tag is wider than the tile.
+
+        <li>The information in <code>struct tile</code> is not consistent with
+        the information in the enclosing structure.
+
+        <li>The tile has negative height.
+<pre><a name="NWtil7-tilN-1" href="#NWDi"><dfn>&lt;tile consistency checks&gt;=</dfn></a> <b>(<a href="#NWDD"><-U</a> <a href="#NWDI"><-U</a> <a href="#NWDL"><-U</a> <a href="#NWDR"><-U</a> <a href="#NWDc"><-U</a>)</b>
+assert(tile-&gt;min &lt;= tile-&gt;max);
+</pre><p>
+</ol>
+
+The code is ugly if:
+<ol>
+        <li>The right side of the rightmost column should be
+        equal to <code>screen.r.max.y</code>.
+
+        <li>The bottom of the bottommost window is further than
+        <code><a name="NWDj">font-&gt;height</a></code> above <code>screen.r.max.x</code>.
+
+        <li>The tile's tag is narrower than the tile.
+</ol>
+
+<h2>Slamming It All Together</h2>
+
+Not much cleverness here....
+
+<pre><a name="NWtil7-tilD.2-1" href="#NWDj"><dfn>&lt;tiletypedef.h&gt;=</dfn></a>
+<a name="NWtil7-tilD.2-1-u1" href="#NWDC"><i>&lt;typedefs&gt;</i></a>
+</pre><pre><a name="NWtil7-tilA-1" href="#NWtil7-tilA-1"><dfn>&lt;tiletype.h&gt;=</dfn></a>
+<a name="NWtil7-tilA-1-u1" href="#NWD1"><i>&lt;data structures&gt;</i></a>
+</pre><pre><a name="NWtil7-tilB-1" href="#NWtil7-tilB-1"><dfn>&lt;tileproto.h&gt;=</dfn></a>
+<a name="NWtil7-tilB-1-u1" href="#NWtil7-pubS-1"><i>&lt;public function declarations&gt;</i></a>
+</pre><pre><a name="NWtil7-til6-1" href="#NWtil7-til6-1"><dfn>&lt;tile.c&gt;=</dfn></a>
+#include &quot;wily.h&quot;
+
+<a name="NWtil7-til6-1-u1" href="#NWDT"><i>&lt;static tile functions&gt;</i></a>
+<a name="NWtil7-til6-1-u2" href="#NWDD"><i>&lt;public tile functions&gt;</i></a>
+</pre><p>
+
+<a name="NWDk"></body></a>
+</html>
+
+
+<ul>
+<li><a href="#NWDP"><i>&lt;add the tile to the list&gt;</i></a>: <a href="#NWDL">U1</a>, <a href="#NWDP">D2</a>
+<li><a href="#NWD1"><i>&lt;data structures&gt;</i></a>: <a href="#NWD1">D1</a>, <a href="#NWD6">D2</a>, <a href="#NWtil7-tilA-1">U3</a>
+<li><a href="#NWDU"><i>&lt;determine amount of space needed&gt;</i></a>: <a href="#NWDT">U1</a>, <a href="#NWDU">D2</a>
+<li><a href="#NWDN"><i>&lt;determine where to place the new tile in the list&gt;</i></a>: <a href="#NWDL">U1</a>, <a href="#NWDN">D2</a>
+<li><a href="#NWtil7-disY-1"><i>&lt;distance to move current tile down&gt;</i></a>: <a href="#NWDN">U1</a>, <a href="#NWtil7-disY-1">D2</a>
+<li><a href="#NWDO"><i>&lt;distance to move current tile up&gt;</i></a>: <a href="#NWDN">U1</a>, <a href="#NWDO">D2</a>
+<li><a href="#NWDW"><i>&lt;expand tiles to fill slack&gt;</i></a>: <a href="#NWDT">U1</a>, <a href="#NWDW">D2</a>
+<li><a href="#NWDJ"><i>&lt;expose the hidden tile <code>tile</code>&gt;</i></a>: <a href="#NWDI">U1</a>, <a href="#NWDJ">D2</a>
+<li><a href="#NWDE"><i>&lt;grow <code>tile</code> a little&gt;</i></a>: <a href="#NWDD">U1</a>, <a href="#NWDE">D2</a>
+<li><a href="#NWDF"><i>&lt;grow <code>tile</code> lots&gt;</i></a>: <a href="#NWDD">U1</a>, <a href="#NWDF">D2</a>
+<li><a href="#NWDG"><i>&lt;grow <code>tile</code> way lots&gt;</i></a>: <a href="#NWDD">U1</a>, <a href="#NWDG">D2</a>
+<li><a href="#NWtil7-locX-1"><i>&lt;local variables for adding a tile&gt;</i></a>: <a href="#NWDL">U1</a>, <a href="#NWtil7-locX-1">D2</a>, <a href="#NWtil7-locX-2">D3</a>
+<li><a href="#NWtil7-locZ-1"><i>&lt;local variables for tile adjustment&gt;</i></a>: <a href="#NWDT">U1</a>, <a href="#NWtil7-locZ-1">D2</a>
+<li><a href="#NWDa"><i>&lt;make sure tile list has room for one more&gt;</i></a>: <a href="#NWDP">U1</a>, <a href="#NWDa">D2</a>
+<li><a href="#NWDM"><i>&lt;make sure tile shape is reasonable&gt;</i></a>: <a href="#NWDL">U1</a>, <a href="#NWDM">D2</a>
+<li><a href="#NWtil7-pubS-1"><i>&lt;public function declarations&gt;</i></a>: <a href="#NWtil7-pubS-1">D1</a>, <a href="#NWtil7-pubS-2">D2</a>, <a href="#NWtil7-pubS-3">D3</a>, <a href="#NWtil7-pubS-4">D4</a>, <a href="#NWtil7-pubS-5">D5</a>, <a href="#NWtil7-pubS-6">D6</a>, <a href="#NWtil7-pubS-7">D7</a>, <a href="#NWDX">D8</a>, <a href="#NWDY">D9</a>, <a href="#NWDZ">D10</a>, <a href="#NWtil7-pubS-B">D11</a>, <a href="#NWtil7-tilB-1">U12</a>
+<li><a href="#NWDD"><i>&lt;public tile functions&gt;</i></a>: <a href="#NWDD">D1</a>, <a href="#NWDH">D2</a>, <a href="#NWDI">D3</a>, <a href="#NWDK">D4</a>, <a href="#NWDL">D5</a>, <a href="#NWDQ">D6</a>, <a href="#NWDR">D7</a>, <a href="#NWDc">D8</a>, <a href="#NWtil7-til6-1">U9</a>
+<li><a href="#NWDS"><i>&lt;repair tile locations&gt;</i></a>: <a href="#NWDR">U1</a>, <a href="#NWDS">D2</a>
+<li><a href="#NWDV"><i>&lt;shrink tiles until space available&gt;</i></a>: <a href="#NWDT">U1</a>, <a href="#NWDV">D2</a>
+<li><a href="#NWDT"><i>&lt;static tile functions&gt;</i></a>: <a href="#NWDT">D1</a>, <a href="#NWDb">D2</a>, <a href="#NWtil7-til6-1">U3</a>
+<li><a href="#NWDi"><i>&lt;tile consistency checks&gt;</i></a>: <a href="#NWDD">U1</a>, <a href="#NWDI">U2</a>, <a href="#NWDL">U3</a>, <a href="#NWDR">U4</a>, <a href="#NWDc">U5</a>, <a href="#NWDi">D6</a>
+<li><a href="#NWD2"><i>&lt;tile elements&gt;</i></a>: <a href="#NWD1">U1</a>, <a href="#NWD2">D2</a>, <a href="#NWD3">D3</a>, <a href="#NWD4">D4</a>, <a href="#NWD5">D5</a>
+<li><a href="#NWDd"><i>&lt;tile list consistency checks&gt;</i></a>: <a href="#NWDc">U1</a>, <a href="#NWDd">D2</a>, <a href="#NWDe">D3</a>, <a href="#NWDf">D4</a>, <a href="#NWDg">D5</a>, <a href="#NWDh">D6</a>
+<li><a href="#NWD7"><i>&lt;tile list elements&gt;</i></a>: <a href="#NWD6">U1</a>, <a href="#NWD7">D2</a>, <a href="#NWD8">D3</a>, <a href="#NWD9">D4</a>, <a href="#NWDA">D5</a>, <a href="#NWDB">D6</a>
+<li><a href="#NWtil7-til6-1"><i>&lt;tile.c&gt;</i></a>: <a href="#NWtil7-til6-1">D1</a>
+<li><a href="#NWtil7-**tK-1"><i>&lt;<code>tile_grow</code> locals&gt;</i></a>: <a href="#NWDD">U1</a>, <a href="#NWtil7-**tK-1">D2</a>
+<li><a href="#NWtil7-**tT-1"><i>&lt;<code>tile_list_reshaped</code> locals&gt;</i></a>: <a href="#NWDR">U1</a>, <a href="#NWtil7-**tT-1">D2</a>
+<li><a href="#NWtil7-tilB-1"><i>&lt;tileproto.h&gt;</i></a>: <a href="#NWtil7-tilB-1">D1</a>
+<li><a href="#NWDj"><i>&lt;tiletypedef.h&gt;</i></a>: <a href="#NWDj">D1</a>
+<li><a href="#NWtil7-tilA-1"><i>&lt;tiletype.h&gt;</i></a>: <a href="#NWtil7-tilA-1">D1</a>
+<li><a href="#NWDC"><i>&lt;typedefs&gt;</i></a>: <a href="#NWDC">D1</a>, <a href="#NWDj">U2</a>
+</ul>
+<ul>
+</ul>
+</body></html>

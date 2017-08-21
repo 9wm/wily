@@ -1,0 +1,88 @@
+<HTML><HEAD><TITLE>Wily FAQ</TITLE></HEAD>
+<BODY><H1><A HREF="index.html">Wily</A> FAQ</H1>
+
+<DL>
+<DT>What is wily?<DD>
+See the <A HREF="intro.html">introduction</A>.
+
+<DT>What does "wilydiag: File exists: can't open fifo" mean?<DD>
+
+Wily opens and listens on a fifo in /tmpin case some program tries
+to communicate with it.  If you're not doing anything tricky like that,
+it won't get used at all.  Ordinarily wily cleans the fifo up when it
+exits, but if something dire happens Wily may not get a chance to clean
+up.  The fifo will be named $WILYFIFO if that is defined, otherwise
+/tmp/wilyUSER$DISPLAY, where USER is your login name.  Just remove it
+and restart wily to be able to use wily messages.
+
+<DT>"Why does my compiler/editor/whatever complain about illegal
+characters?  The line looks fine to me."<DD>
+
+Chances are that you've managed to enter a control character
+accidentally, and the font you're using doesn't display control
+characters. The easiest way to check is to select the line (or other
+text) that's causing the complaint, and click on "|cat -v" (or some
+other program that can display control characters, such as vis or od). I
+find ^A the most common offender.
+</DL>
+
+<H2>The Wily Window Manager?</H2>
+
+<P>Window management is probably the biggest open problem with Wily,
+probably because there's no real <I>solution</I>, only heuristics.
+
+<P>The first iteration of Wily creatied a bunch of separate X windows
+and let the window manager handle arranging them.  This seems a more
+modular, tool-based approach.  However, bitter experience showed that
+most existing window managers just don't cut it when you're quickly
+creating and deleting lots of windows.  Acme's window management,was
+much better.
+
+<P>The logical solution then would be to write an X window manager that
+works like the window management in Acme.  However:
+
+<UL>
+<LI>Writing a window manager requires knowing a _lot_ more about X than
+I ever want to know
+
+<LI> Either the wily windows would need to be separate processes,
+communicating probably via some sort of X IPC (more arcane X'ery), or
+libXg would need to be modified to allow multiple windows (O who will
+save me from this plague of X?)
+
+<LI> This sort of window manager would probably _not_ be appropriate
+for managing the other windows normally on the desktop.
+</UL>
+
+<P>So Wily is designed to be run in one big window, and it does its own
+window management within that.  It's a bit of a hack, but probably the
+best solution for the moment.
+
+<P>Still, I hope it shouldn't be too hard to remove the "Wily is managing
+all the windows" assumption from the code if some brave soul solves the
+problems mentioned above.
+
+<H3>Funky B3 expansion allows some letters, not others?</H3>
+To quote rob (it was originally rob's comment, wasn't it?): "Hard to
+get absolutely right." The problem is that you can have pretty much
+everything in a filename apart from \0, but usually you want it to
+pick sensible strings. It's not just filenames, after all, but also
+identifiers in programs. After all, Acme is primarily a programmer's
+tool, because there aren't any other kinds of Plan 9 user. :-) Plus,
+most of them are shell metacharacters (in rc).
+
+<P>The set you want to match varies from instance to instance, so it's
+pretty much an arbitrary choice. Sometimes you lose. Some justification
+would be good for the docs, though. Anyone know why "*" is considered
+a valid character? Hmmm. Ones not in the above list are "#$^*_-:~,./".
+Of these, "~./" are parts of common filenames (~steve/x.c), "#$-:,."
+are part of the syntax for expressing an Acme address, and "_" is a
+common identifier character. That just leaves "^*". I suspect these
+are allowed because they're commonly used as part of a regexp search.
+<P><TT>Steve Kilbane</TT>
+
+<H3>Why does it take so long to load my [mumble]-meg file?</H3>
+Blame steve.
+
+</BODY>
+</HTML>

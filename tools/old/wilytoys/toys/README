@@ -1,0 +1,99 @@
+These files are a few toys that I thought I would share with other people.
+They're not at all polished, and one of them was only just finished today,
+but hey - that's life on the edge.
+
+What is here:
+	- working wcat to shove files into wily.
+	- filter to convert man pages into something pretty and readable.
+	- some scripts to view HTML web pages with wily.
+	- a couple of useful wily wrapper scripts.
+
+What you need:
+	- perl. 4.036 is what I use, but you might get away with v5.
+	- Expect, if you want to be able to download web pages. Actually,
+	there are plain perl scripts around on the net to do this, but I
+	couldn't get the damn things to work on my machine, and I
+	was in a hurry. I recommend trying one of the existing perl
+	things (get_url, etc.) before installing Expect, if you haven't
+	already got it.
+	- the fonts from Matty's 9term distribution (if you want pretty
+	man pages).
+	- wily 0.98.
+	- luck.
+
+Major Credit where credit is due:
+	- The Perl scripts used for converting HTML files into something
+	vaguely readable is by James R. Davis. I grabbed it from the web,
+	and made a few minor changes to make it function as a wily
+	browser, but the proper work's all James'.
+
+To build wcat:
+	- Fiddle with the Makefile, so that it can find your wily distribution.
+	- make all. If you want, you might want to bodge ./make, and put it
+	somewhere where wily can find it. I use it to mangle the output of
+	Sun's ANSI compiler into wily-style file:line references. There isn't
+	a lot of point including it here, except that perl allows you to see
+	each error message as it appears, with minimal buffering. there's
+	also a "diff" script which does much the same thing. Well, I like it...
+
+The Makefile also builds "bold". We'll come back to that shortly.
+
+Man page viewer:
+	This is an horrendous cheat, as suggested by either myself or
+	gary/matty a while ago in the list (I forget who). Basically, it
+	uses the large Unicode character set to have normal, italic and
+	bold versions of the same characters within your set, and just
+	displays the appropriate one according to the output of nroff/man.
+	This required a little bit of setting up and munging around with
+	fonts. These are my notes which I scrawled at the time that I
+	got this going:
+
+		Unpacked matty's font distribution.
+		ran mkfontdir in the bdf directory.
+		Selected a font I liked using xfontsel(1).
+		Created bdf/fonts.alias, containing the alias "wilynormal" for
+		this preferred font.
+		Put wilynormal as the first font in smk.9.font (which I'd copied
+		from prop.9.font).
+		Add the font directory to the X server's font path with
+		xset fp+ /home/steve/lib/fonts/bdf
+		Changed bin/acme to have smk.9.font and fixed.9.font args.
+		Checked all was ok by viewing src/9/hacked/9term/utf.test
+
+	I've included my font files and the fonts.alias file so that you can
+	see what I've done. Note that the extra character sets appear in the
+	0x4000-odd range, and that this is hard-coded into the source for
+	"bold.c".
+
+	The man page viewer ("man") takes standard man arguments, and passes
+	the output of normal man through bold, to get the pretty fonts, and then
+	into wcat to display the file in wily. It doesn't get everything right, but it's
+	good enough for what I use it for. You can also B2B1 on filename.1 files
+	to view them directly.
+
+HTML web browser:
+	This has three parts. The first is fetchurl, a quick Expect script that will
+	grab the output of a telnet connection to some web server. Use a proper
+	perl program to do this if you can get one. For starters, mine only handles
+	http URLs.
+
+	The second part is the driver, http. This takes as an argument a normal
+	URL, e.g. "http http://www.w3.org". It uses fetchurl to grab the file, and
+	then passes it to the final part, html2wily.
+
+	Html2wily does the clever bit of generating readable ASCII out of the
+	HTML. The bit I've added is to support URLs within the file: given a
+	URL such as <A HREF="http://www.foo.com/file.html">Some Text</A>,
+	you end up with this: [_u1][Some Text]. At the bottom of the file, you
+	see: [_u1][http http://www.foo.com/file.html]. The idea is that you can
+	B3 on the _u1 to move between the highlighted text and the URL that
+	goes with it. If you decide to follow the URL, you double-click beside the
+	[ or ], to select the whole command, and B2 it. The process then begins
+	again. Incidentally, there are a few broken bits in this, especially where
+	partial URLs are converted into full ones, but that's life. This thing
+	took about 2 hours to write, this morning.
+
+Hope this of some use...
+
+Steve Kilbane, 12 March 1996.
+<Steve_Kilbane@cegelecproj.co.uk>

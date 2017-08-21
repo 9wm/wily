@@ -1,0 +1,76 @@
+.de F
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de L
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de FR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de LR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de CW
+.ft B
+..
+.\" This is gross but it avoids relying on internal implementation details
+.\" of the -man macros.
+.de TF
+.IP "" \w'\fB\\$1\ \ \fP'u
+.PD0
+..
+.de EX
+.CW
+.nf
+..
+.de EE
+.fi
+..
+.\" delete above this point if your system has F, L, FR, LR, CW and TF macros
+.TH FONT 4
+.SH NAME
+font, subfont \- external format for fonts and subfonts
+.SH SYNOPSIS
+.nf
+.B
+#include <libc.h>
+.B
+#include <libg.h>
+.fi
+.SH DESCRIPTION
+Fonts and subfonts are described in
+.IR cachechars (3).
+.PP
+External fonts are described by a plain text file that can be read using
+.I rdfontfile.
+The format of the file is a header followed by any number of
+subfont range specifications.
+The header contains two numbers: the height and the ascent.
+The height is the inter-line spacing and the ascent is the distance
+from the top of the line to the baseline.  These numbers are chosen
+to display consistently all the subfonts of the font.
+A subfont range specification contains two numbers and a font name.
+The numbers are the inclusive range of characters covered by the subfont,
+and name specifies the name of an X font suitable for
+.IR getsubfont .
+The minimum number of a covered range is mapped to the first defined
+character of the corresponding subfont.
+Each field must be followed by some white space.
+Each numeric field may be C-format decimal, octal, or hexadecimal.
+.PP
+Subfonts may be loaded using
+.IR getsubfont ,
+see
+.IR graphics (3).
+.SH BUGS
+Some X font names contain spaces which will terminate the field.
+For some fonts this can be worked around by replacing the spaces
+with
+.L `*'
+characters in an attempt to fool the X font name pattern matching mechanism.
+.SH "SEE ALSO"
+.IR graphics (3),
+.IR bitblt (3),
+.IR cachechars (3).

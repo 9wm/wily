@@ -1,0 +1,14 @@
+#!wtcl
+#
+#	$Header: /u/cvs/wtcl/wnew,v 1.1.1.1 1996/11/12 21:28:09 cvs Exp $
+#
+wily init
+set wd [pwd]
+
+foreach i "$argv" {
+	if [regexp "^/" $i] {
+		wily new $i
+	} else {
+		wily new "$wd/$i"
+	}
+}

@@ -1,0 +1,97 @@
+<HTML><HEAD><TITLE>Wily Python Programmers Manual</TITLE></HEAD>
+<BODY><H1><A HREF="index.html">Wily</A> Python Programmers Manual</H1>
+
+<H2>Summary</H2>
+Create a <TT>Connection</TT>, use it to create and manipulate 
+Wily windows.
+
+<P>See <A HREF="pythonpaper.html">pythonpaper.html</A> for a discussion of the design.
+(Unfortunately out of date).
+
+<H2>Creating a Connection</H2>
+<PRE>
+import wily
+con = wily.Connection()
+</PRE>
+
+<H2>methods of a Connection object</H2>
+<DL COMPACT>
+<DT><TT>list()</TT><DD>
+Returns the names and IDs of all open windows.
+The values are returned in one big string, with names and IDs separated
+by a tab, and each (name,id) pair on its own line.
+<PRE>
+listing = con.list()
+lines = string.split(listing, '\n')
+winid = {}
+for line in lines[:-1]:
+	[name,id] = string.split(line, '\t')
+	winid[name] = string.atoi(id)
+</PRE>
+... will give you a dictionary mapping names to numeric ids.
+
+<DT><TT>win(name:string, isBackedUp:integer)</TT><DD>
+Returns an integer window identifier, to be used for later operations on the window
+
+<DT><TT>event()</TT><DD>
+returns an event tuple <TT>(w, t, r0, r1, s)</TT>, whose fields are:
+	<DL>
+	<DT><TT>w</TT><DD>
+	window identifier
+	<DT><TT>t</TT><DD>
+	event type
+	<DT><TT>r0, r1</TT><DD>
+	affected range
+	<DT><TT>s</TT><DD>
+	string
+	</DL>
+
+The meaning (if any) of the values of <TT>r0</TT>, <TT>r1</TT> and <TT>s</TT> depend
+on the event type '<TT>t</TT>'
+
+<DT><TT>eventwouldblock()</TT><DD>
+If <TT>eventwouldblock()</TT> returns true, calling <TT>event()</TT> might have to wait.
+If <TT>eventwouldblock()</TT> returns false, calling <TT>event()</TT> would return immediately
+because an event is already queued up and waiting.
+
+<DT><TT>bounce(tuple)</TT><DD>
+Called with an event tuple as returned by <TT>event()</TT>.  Returns <TT>None</TT>.  Used for returning an event we want Wily to handle instead of us.
+
+<DT><TT>attach(w:integer, mask:integer)</TT><DD>
+'<TT>w</TT>' is a window identifier as obtained by <TT>new()</TT> or<TT> list()</TT>.
+'<TT>mask</TT>' is a bitmask of event types.
+Sets the mask of events to be sent to us.
+
+<DT><TT>setname(w:integer, s:string)</TT><DD>
+Set <TT>w</TT>'s name to '<TT>s</TT>'
+
+<DT><TT>settools(w:integer, s:string)</TT><DD>
+Set <TT>w</TT>'s tools to '<TT>s</TT>'
+
+<DT><TT>read(w:integer, from:integer, to:integer)</TT><DD>
+returns a (UTF) string
+
+<DT><TT>replace(w:integer, from:integer, to:integer, s:string)</TT><DD>
+replace the text in '<TT>w</TT>' from '<TT>from</TT>' to '<TT>to</TT>' with '<TT>s</TT>'
+
+<DT><TT>run(w:integer, s:string)</TT><DD>
+has the same effect as sweeping '<TT>s</TT>' with B2  in window '<TT>w</TT>'
+
+<DT><TT>goto(w:integer, from:long, to:long, s:string, flag:integer)</TT><DD>
+has the same effect as sweeping '<TT>s</TT>' with B3  in window '<TT>w</TT>',
+and starting any search at range(<TT>from,to</TT>), except that we only
+warp and select text if '<TT>flag</TT>' is set.
+<BR>Returns a tuple (<TT>w:integer, from:long, to:long</TT>),
+which represents the window and selection that was
+opened.
+</DL>
+
+<H2>Constants</H2>
+<TT>GOTO</TT>, <TT>EXEC</TT>, <TT>DESTROY</TT>
+and <TT>REPLACE</TT> are event bitmask values, useful for comparing to
+the event type returned by <TT>event()</TT>, and for setting the bitmask in
+<TT>attach()</TT>.
+<HR>
+<A HREF="mailto:gary@cs.su.oz.au">gary@cs.su.oz.au</A>
+</BODY>
+</HTML>

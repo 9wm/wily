@@ -1,0 +1,16 @@
+#!wtcl
+#
+#	$Header: /u/cvs/wtcl/wattach,v 1.1.1.1 1996/11/12 21:28:10 cvs Exp $
+#
+wily init
+wily attach $argv
+while {1} {
+	set	event [wily event]
+	if [string match [lindex $event 0] WMexec] {
+		if [string match [lindex $event 2] Del] {
+			wily bounce
+			exit
+		}
+	}
+	puts $event
+}

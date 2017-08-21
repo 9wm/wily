@@ -1,0 +1,128 @@
+.de F
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de L
+.B
+.if !"\\$1"" \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6
+..
+.de FR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de LR
+.BR "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6"
+..
+.de CW
+.ft B
+..
+.\" This is gross but it avoids relying on internal implementation details
+.\" of the -man macros.
+.de TF
+.IP "" \w'\fB\\$1\ \ \fP'u
+.PD0
+..
+.de EX
+.CW
+.nf
+..
+.de EE
+.fi
+..
+.\" delete above this point if your system has F, L, FR, LR, CW and TF macros
+.TH RGBPIX 3G
+.SH NAME
+RGB, rgbpix, rdcolmap, wrcolmap
+.SH SYNOPSIS
+.nf
+.PP
+.B
+#include <libc.h>
+.B
+#include <libg.h>
+.PP
+.ta \w'\fLunsigned long 'u
+.B
+unsigned long	rgbpix(Bitmap *b, RGB rgb)
+.PP
+.B
+void	rdcolmap(Bitmap *b, RGB *map)
+.PP
+.B
+void	wrcolmap(Bitmap *b, RGB *map)
+.fi
+.SH DESCRIPTION
+Colors are described by the red, green, and blue
+light intensities, in an
+.B RGB
+datum:
+.IP
+.EX
+.ta 6n
+typedef
+struct RGB {
+	unsigned long red;
+	unsigned long green;
+	unsigned long blue;
+} RGB;
+.EE
+.PP
+Zero intensity means there is no component of the given color;
+hence, black is represented by zero in all three positions and
+white has the maximum unsigned long value in all three positions.
+.PP
+Some of the graphics functions, such as
+.I point
+(see
+.IR bitblt (3)),
+take a
+.I pixel value
+argument, which is a single unsigned long.
+For a given bitmap,
+.I rgbpix
+returns the pixel value with a color closest to
+the color represented by the
+.I rgb
+argument.
+.PP
+There is a
+.I colormap
+associated with each Bitmap.  A colormap is an array of
+.BR RGB s,
+of length
+.if t 2\u\s82\u\s6\fIldepth\fP\d\d\s10,
+.if n 2^(2^\fIldepth\fP),
+giving the colors for pixels 0, 1, 2, etc.
+.PP
+.I Rdcolormap
+reads the colormap for the given bitmap into the provided
+.IR map ,
+which must have enough space to hold it.
+.I Wrcolormap
+associates the given colormap with the given bitmap, if possible.
+(The hardware might not allow this.)
+.SH CAVEAT
+The X implementation of libg uses whatever colourmap is
+the default when it starts up.
+A call to
+.I rgbpix
+will result in a call to
+.I XAllocColor
+and the allocation of a new colour in the application's colourmap
+if there is room.
+If no new colours can be allocated
+.I rgbpix
+will return the closest pixel value approximating the requested colour.
+If an application calls
+.I wrcolmap
+the default colourmap is replaced with the new colourmap and from
+then on
+.I rgbpix
+will deal with the new colourmap.
+.SH BUGS
+These functions only work for the screen bitmap.
+This interface will have to be refined for screens with
+ldepth > 3.
+.SH "SEE ALSO"
+.IR graphics (3),
+.IR bitblt (3)
+

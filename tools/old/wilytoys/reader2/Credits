@@ -1,0 +1,4 @@
+Bjorn Helgaas <helgaas@convex.com>
+	change of FILENAME_MAX to MAXPATHLEN
+arnold@infographix.infographix.com (Arnold Robbins)
+	Various suggestions.

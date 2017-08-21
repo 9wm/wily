@@ -1,0 +1,45 @@
+ * The author of this software is Gary Capell.
+ *		Copyright (c) 1995, 1996 by Gary Capell.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose without fee is hereby granted, provided that this entire notice
+ * is included in all copies of any software which is or includes a copy
+ * or modification of this software and in all copies of the supporting
+ * documentation for such software.
+ * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+ * WARRANTY.  IN PARTICULAR, THE AUTHOR DOES NOT MAKE ANY
+ * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+ * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+
+Wily is an emulation of Acme. Acme was written by Rob Pike.  Nearly all of
+the nifty ideas (but none of the source code) in Wily are taken from Acme.
+
+Read INSTALL for hints on how to build.
+
+Ignore error messages like "no libXg configuration in dir sam"
+
+If 'make' fails, try 'gmake' (GNU make).
+
+Mail wilyfans-request@jli.com to subscribe to a list discussing wily
+(and to find out about new releases).
+
+Please mail gary@cs.su.oz.au if you get this working and you like it, or
+mail wilyfans@jli.com if you have problems getting something to work.
+
+Some Wily documentation is in wily/Doc and more will soon follow.
+Start with wily/Doc/00README
+
+README.sam contains some info about Sam and libXg, from which
+a bunch of code for wily was grabbed.
+
+Wily is Unicode aware, so with the right font files it will display all
+sorts of international characters.  See
+http://www.cs.su.oz.au/~matty/9term/index.html for documentation on
+another Unicode-aware program (using the same libraries), including
+some screen shots showing some of the characters available, and a
+bundle of (mono-space) Unicode fonts.
+
+Wily is nicest to use with a proportional font.  Use wily -fn
+<fontname> or use X defaults.  Wily.ad is my application defaults file,
+prop.9.font and fixed.9.font are my two font files.  These refer to
+some fonts distributed with 9term.  I would be _very_ happy if someone
+contributed a full set of proportional Unicode fonts.

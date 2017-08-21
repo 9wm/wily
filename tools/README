@@ -1,0 +1,8 @@
+A bunch of programs that use wily for their user interface,
+and tools to create such programs.
+
+old		stuff pre wily-0.11
+quanstro	tools from erik quanstrom <quanstro@Infomkt.ibm.com>
+python	python interface for wily messages
+win		simple terminal
+wpnews	wily/python news reader

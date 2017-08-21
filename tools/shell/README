@@ -1,0 +1,16 @@
+Some simple C programs to use as wrappers around shell
+scripts to interact with Wily.
+
+Having to know window id's is pretty cumbersome, I know,
+and I'm open to suggestions on how to improve things.
+
+Wins
+	print list of 'filename winid' lines to stdout
+Wexec cmd id
+	Execute cmd (as if selected with b2), in context of id
+Wgoto path id
+	Goto 'path' (as if selected with b3), in context of id
+
+
+# NB this is *guaranteed* _not_ to compile "out of the box",
+you'll need a Makefile that isn't stupid, like the current one.

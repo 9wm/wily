@@ -1,0 +1,63 @@
+N. Wirth, J. Gutknecht
+	Oberon
+Rob Pike <rob@research.att.com>
+	Acme
+Gary Capell <gary@cs.su.oz.au>
+	Wily first draft, current maintainer
+Bill Trost <trost@cloud.rain.com>
+	too many patches, bugfixes, ideas to list
+	fixed listen() race condition
+	stripnulls bug
+	expanded address stuff
+	better env.c
+	reduce excessive redraws
+	fix for next_width bug
+	much of the messaging design
+	"undo" bugfix
+	Dot builtin
+	tag_findtool
+Steve Kilbane
+	integrated sam's regexp
+Richard Wolff
+	sunos4 patches,
+	msg.c bugfix
+	use salloc, srealloc in sam regexp stuff
+Arnold Robbins
+	cleanup wilyfifo
+	ignore SIGPIPE
+Assar <assar@pdc.kth.se>
+	autoconfig stuff
+Scott Schwartz
+	prevent $TMPDIR replacing /tmp in tag
+	fix to wily/sam.c:/^error_c
+	path.c - nextstr pathfind searchincludedirs
+Mark H. Wilkinson <mhw@minster.york.ac.uk>
+	fix ESC bug
+	use $WILYBAK as the backup directory
+	bug in delpane
+	snarf/paste use X clipboard
+	memory overrun in libmsg/util.c:/^stripnulls
+	pstrapp
+
+Bjorn Helgaas <helgaas@convex.hp.com>
+	fix bug when scrolling one-line window
+	bug in event.c
+	Font builtin
+	better scrolling
+	Local builtin
+	nicer scroll_init
+	FILENAME_MAX -> MAXPATHLEN in libmsg/connect.c
+
+Kyle <kaschei@staff.cs.su.oz.au>
+	wily.xpm
+	bug: in win.c
+Davor Cubranic <cubranic@hermes.si>
+	bugs: New window has no cursor, Look in empty window dumps core
+
+Rich Salz,
+Beirne Konarski,
+Scott Schwartz
+Daniel Neri <d92-dne@nada.kth.se>
+	"Split" bug-report
+Stephen Gallimore <stephen@psyc.leeds.ac.uk>
+	pathfind patch

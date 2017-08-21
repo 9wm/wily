@@ -1,0 +1,66 @@
+#!/usr/local/bin/perl  -I/home/steve/bin/Wily
+
+# Program to generate ASCII text for HTML
+# Created by  James R. Davis, July 15 1994
+
+
+# Split a URL into its component parts
+
+sub split_url {
+	local($method, $host, $port, $path);
+	$_ = $_[0];
+	/^((http|ftp|news|mailto|gopher|telnet):)?(\/\/([^\/:]+)(:([0-9]+))?)?(.*)/;
+	$method = $2;
+	$host = $4;
+	$port = $6;
+	$path = $7;
+	return ($method, $host, $port, $path);
+}
+
+# Convert a hyperlink URL into a FQU, if necessary.
+
+sub fqu {
+	local($partial) = @_;
+	local($full);
+	local($pmethod, $phost, $pport, $ppath) = &split_url($partial);
+	$pmethod = $basemethod if $pmethod eq "";
+	$phost = $basehost if $phost eq "";
+	$pport = $baseport if $pport eq "";
+	if ($pport eq "80") {
+		$pport = "";
+	} else {
+		$pport = ":" . $pport;
+	}
+	if ($phost eq $basehost) {
+		if ($ppath !~ /^\//) {
+			$ppath = $basepath . '/' . $ppath;
+		}
+	}
+	$full = $pmethod . "://" . $phost . $pport . $ppath;
+	return $full;
+}
+
+# get directory where this file is.  
+{$0 =~ /^(.*)\/.*$/;  $my_dir = $1; 
+ if ($my_dir !~ ?^/?) {$my_dir = $ENV{PWD} . "/" . $my_dir;}
+ if ($my_dir =~ ?/$?) {chop ($my_dir);}}
+push(@INC, $my_dir);
+
+# Parse command line arguments.
+$file = shift;
+$baseurl = shift;
+($basemethod, $basehost, $baseport, $basepath) = &split_url($baseurl);
+$baseport = "80" if $baseport eq "";
+
+require "parse-html.pl" || die "Could not load parse-html.pl";
+require "html-ascii.pl" || die "Could not load html-ascii.pl";
+
+%wily_urls = ();
+$wily_url = 1;
+
+&parse_html ($file);
+
+foreach $k (keys %wily_urls) {
+	$u = &fqu($wily_urls{$k});
+	print "[_u$k] [http $u]\n";
+}

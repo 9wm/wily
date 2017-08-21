@@ -1,0 +1,95 @@
+.\" Dd	distance to space vertically before a "display"
+.\" These are what n/troff use for interparagraph distance
+.\"-------
+.if t .nr Dd .4v
+.if n .nr Dd 1v
+.\"-------
+.\" Ds	begin a display, indented .5 inches from the surrounding text.
+.\"
+.\" Note that uses of Ds and De may NOT be nested.
+.\"-------
+.de Ds
+.sp \\n(Ddu
+.RS \\$1
+.nf
+..
+.\"-------
+.\" De	end a display (no trailing vertical spacing)
+.\"-------
+.de De
+.fi
+.RE
+.in
+..
+.\" @(#) Tag %R%.%L% of %D%
+.TH Tag 1 "%R%.%L% of %D%"
+.SH NAME
+Tag \- Search for and move to a tagged location
+.SH SYNOPSIS
+.B Tag
+.RB [ \-v ]
+.I name
+.SH OPTIONS
+.TP
+.B \-v
+If the
+.B \-v
+option is present,
+.I Tag
+prints its version number and date and exits.
+.SH DESCRIPTION
+.I Tag
+must be able to connect to a running 
+.I wily (1).
+.PP
+.I Tag
+looks for a tag entry corresponding to
+.I name
+in the file
+.I Tags
+in the current directory.
+Each line in the
+.I Tags
+file is a tag entry consisting of a name,
+then a space, then a wily address.
+If
+.I Tag
+finds a unique entry corresponding to 
+.I name ,
+it executes a
+.I wgoto
+command to search for and move to the address.
+If
+.I Tag
+finds more than one entry corresponding to
+.I name ,
+it prints the addresses to the
+.I +Errors
+window and executes a 
+.I Goto
+command to move to the
+.I +Errors
+window.
+The correct address can then be selected.
+.SH RETURNS
+.I Tag
+returns zero if it was able to find a unique
+tag entry and execute the 
+.I wgoto
+command successfully,
+otherwise it returns non-zero.
+No indication of the success or the failure of the actual
+search is given.
+.SH EXAMPLES
+Find the tag entry corresponding to main
+.DS
+Tag main
+.De
+.SH FILES
+.I Tags
+.SH SEE ALSO
+.IR wily (1),
+.IR mktags (1)
+.IR wgoto (1),
+.SH AUTHOR
+Alan Watson (alan@oldp.nmsu.edu)
