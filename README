@@ -15,6 +15,9 @@ the nifty ideas (but none of the source code) in Wily are taken from Acme.
 
 Read INSTALL for hints on how to build.
 
+If you are building this software from a git checkout you will likely need
+to first run 'autoreconf'
+
 Ignore error messages like "no libXg configuration in dir sam"
 
 If 'make' fails, try 'gmake' (GNU make).
