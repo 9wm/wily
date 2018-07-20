@@ -6,7 +6,7 @@ LIBS=@LIBS@
 exec_prefix = @exec_prefix@
 
 # Directory in which to install scripts.
-bindir = $(exec_prefix)/bin
+bindir = $(DESTDIR)$(exec_prefix)/bin
 CC=@CC@
 RANLIB=@RANLIB@
 INCLUDES= -I.. -I$(srcdir)/../include @X_CFLAGS@
